@@ -26,16 +26,16 @@ class CreateJoinGameSessionView(APIView):
             try:
                 game_session = GameSession.objects.get(game_code=game_code)
             except GameSession.DoesNotExist:
-                return Response({"detail": "Game session does not exist."}, status=404)
+                return Response({"Game Session": ["Game session does not exist."]}, status=404)
 
             if game_session.has_started:
-                return Response({"detail": "Game has already started."}, status=400)
+                return Response({"Game Session": ["Game has already started."]}, status=400)
         else:
             game_session = GameSession.objects.create(owner=None)
 
         player = Player(game_session=game_session, **serializer.validated_data)
         if Player.objects.filter(game_session=game_session, nickname=player.nickname).exists():
-            return Response({"detail": "Nickname already in use."}, status=400)
+            return Response({"nickname": ["Nickname already in use."]}, status=400)
         player.village = Village.objects.create()
         player.save()
 
