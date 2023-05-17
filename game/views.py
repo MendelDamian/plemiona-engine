@@ -8,7 +8,7 @@ from game.models import GameSession, Player, Village
 
 class CreateGameSessionSerializer(serializers.Serializer):
     nickname = serializers.CharField(max_length=30, min_length=6, required=True)
-    game_code = serializers.CharField(max_length=6, min_length=6, required=False)
+    game_code = serializers.CharField(max_length=6, required=False, allow_blank=True)
 
 
 class CreateJoinGameSessionView(APIView):
@@ -19,6 +19,9 @@ class CreateJoinGameSessionView(APIView):
         serializer.is_valid(raise_exception=True)
 
         game_code = serializer.validated_data.pop("game_code", None)
+        if game_code.strip() == "":
+            game_code = None
+
         if game_code:
             try:
                 game_session = GameSession.objects.get(game_code=game_code)
@@ -49,4 +52,4 @@ class CreateJoinGameSessionView(APIView):
             'game_session_id': game_session.id,
             "game_code": game_session.game_code,
         }
-        return Response(response_data)
+        return Response(response_data, status=201)
