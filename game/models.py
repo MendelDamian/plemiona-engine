@@ -37,6 +37,8 @@ class Player(models.Model):
     game_session = models.ForeignKey("GameSession", on_delete=models.CASCADE, null=False)
     village = models.OneToOneField("Village", on_delete=models.CASCADE, null=False)
 
+    is_authenticated = True
+
     class Meta:
         verbose_name = "Player"
         verbose_name_plural = "Players"
