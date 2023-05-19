@@ -63,10 +63,11 @@ class StartGameSessionView(APIView):
             return Response({"Player": ["is not the owner."]}, status=status.HTTP_403_FORBIDDEN)
 
         if player.game_session.has_started:
-            return Response({"Game session": ["has already started."]}, status=400)
+            return Response({"Game session": ["has already started."]}, status=status.HTTP_400_BAD_REQUEST)
 
         if player.game_session.player_set.count() < 2:
-            return Response({"Game session": ["requires minimum 2 players to start the game."]}, status=400)
+            return Response({"Game session": ["requires minimum 2 players to start the game."]},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         player.game_session.has_started = True
         player.game_session.save()
