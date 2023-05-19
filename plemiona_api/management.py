@@ -11,7 +11,7 @@ from game.models import Player
 class JWTAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
         # Extract the JWT from the Authorization header
-        jwt_token = request.META.get('HTTP_AUTHORIZATION')
+        jwt_token = request.META.get("HTTP_AUTHORIZATION")
         if jwt_token is None:
             return None
 
@@ -19,44 +19,44 @@ class JWTAuthentication(authentication.BaseAuthentication):
 
         # Decode the JWT and verify its signature
         try:
-            payload = jwt.decode(jwt_token, settings.SECRET_KEY, algorithms=['HS256'])
+            payload = jwt.decode(jwt_token, settings.SECRET_KEY, algorithms=["HS256"])
         except jwt.exceptions.InvalidSignatureError:
-            raise AuthenticationFailed('Invalid signature')
+            raise AuthenticationFailed("Invalid signature")
         except:
-            raise ParseError()
+            raise AuthenticationFailed("Invalid token")
 
         # Get the user from the database
-        player_id = payload.get('player_id')
+        player_id = payload.get("player_id")
         if player_id is None:
-            raise AuthenticationFailed('Player identifier not found in JWT')
+            raise AuthenticationFailed("Player identifier not found in JWT")
 
-        user = Player.objects.filter(id=player_id).first()
-        if user is None:
-            raise AuthenticationFailed('Player not found')
+        player = Player.objects.filter(id=player_id).first()
+        if player is None:
+            raise AuthenticationFailed("Player not found")
 
-        # Return the user and token payload
-        return user, payload
+        # Return the player and token payload
+        return player, payload
 
     def authenticate_header(self, request):
-        return 'Bearer'
+        return "Bearer"
 
     @classmethod
     def create_jwt(cls, user):
         # Create the JWT payload
         payload = {
-            'user_identifier': user.username,
-            'exp': int((datetime.now() + timedelta(hours=settings.JWT_CONF['TOKEN_LIFETIME_HOURS'])).timestamp()),
+            "user_identifier": user.username,
+            "exp": int((datetime.now() + timedelta(hours=settings.JWT_CONF["TOKEN_LIFETIME_HOURS"])).timestamp()),
             # set the expiration time for 5 hour from now
-            'iat': datetime.now().timestamp(),
-            'username': user.username,
+            "iat": datetime.now().timestamp(),
+            "username": user.username,
         }
 
         # Encode the JWT with your secret key
-        jwt_token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+        jwt_token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
 
         return jwt_token
 
     @classmethod
     def get_the_token_from_header(cls, token):
-        token = token.replace('Bearer', '').replace(' ', '')  # clean the token
+        token = token.replace("Bearer", "").replace(" ", "")  # clean the token
         return token
