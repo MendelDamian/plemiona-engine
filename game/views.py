@@ -20,6 +20,10 @@ class CreateJoinGameSessionView(APIView):
         serializer = CreateGameSessionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        error = {
+            "errors": {}
+        }
+
         nickname = serializer.validated_data["nickname"]
         game_code = serializer.validated_data.pop("game_code", None)
         if game_code and game_code.strip() == "":
@@ -29,15 +33,18 @@ class CreateJoinGameSessionView(APIView):
             try:
                 game_session = GameSession.objects.get(game_code=game_code)
             except GameSession.DoesNotExist:
-                return Response({"Game Session": ["does not exist."]}, status=status.HTTP_404_NOT_FOUND)
+                error["errors"]["Game session"] = ["does not exist."]
+                return Response(error, status=status.HTTP_404_NOT_FOUND)
 
             if game_session.has_started:
-                return Response({"Game Session": ["has already started."]}, status=status.HTTP_400_BAD_REQUEST)
+                error["errors"]["Game session"] = ["has already started."]
+                return Response(error, status=status.HTTP_400_BAD_REQUEST)
         else:
             game_session = GameSession.objects.create(owner=None)
 
         if Player.objects.filter(game_session=game_session, nickname=nickname).exists():
-            return Response({"Nickname": ["is already in use."]}, status=status.HTTP_400_BAD_REQUEST)
+            error["errors"]["Nickname"] = ["is already in use."]
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
         player = Player.objects.create(game_session=game_session, nickname=nickname)
 
         if not game_session.owner:
@@ -58,16 +65,22 @@ class CreateJoinGameSessionView(APIView):
 
 class StartGameSessionView(APIView):
     def post(self, request, *args, **kwargs):
+        error = {
+            "errors": {}
+        }
+
         player = request.user
         if player != player.game_session.owner:
-            return Response({"Player": ["is not the owner."]}, status=status.HTTP_403_FORBIDDEN)
+            error["errors"]["Player"] = ["is not the owner."]
+            return Response(error, status=status.HTTP_403_FORBIDDEN)
 
         if player.game_session.has_started:
-            return Response({"Game session": ["has already started."]}, status=status.HTTP_400_BAD_REQUEST)
+            error["errors"]["Game session"] = ["has already started."]
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
 
         if player.game_session.player_set.count() < 2:
-            return Response({"Game session": ["requires minimum 2 players to start the game."]},
-                            status=status.HTTP_400_BAD_REQUEST)
+            error["errors"]["Game session"] = ["requires minimum 2 players to start the game."]
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
 
         player.game_session.has_started = True
         player.game_session.save()
