@@ -17,12 +17,17 @@ class CreateJoinGameSessionView(APIView):
     permission_classes = []
 
     def post(self, request, *args, **kwargs):
-        serializer = CreateGameSessionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
         error = {
             "errors": {}
         }
+
+        serializer = CreateGameSessionSerializer(data=request.data)
+        if serializer.is_valid() is False:
+            serializer_errors = serializer.errors
+            for element in serializer_errors:
+                error["errors"][element.capitalize()] = serializer_errors[element]
+
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
 
         nickname = serializer.validated_data["nickname"]
         game_code = serializer.validated_data.pop("game_code", None)
