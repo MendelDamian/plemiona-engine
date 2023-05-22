@@ -134,7 +134,7 @@ class GameSessionTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertTrue(game_session.has_started)
 
-    def test_view_start_game_session_with_not_owner(self):
+    def test_view_start_game_session_as_not_owner(self):
         game_session = GameSession.objects.create(game_code="123456")
         player = Player.objects.create(nickname="test", game_session=game_session)
         player2 = Player.objects.create(nickname="test2", game_session=game_session)
