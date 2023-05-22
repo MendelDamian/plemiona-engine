@@ -65,6 +65,8 @@ class CreateJoinGameSessionView(APIView):
             "token": str(refresh.access_token),
             "player_id": player.id,
             "game_session_id": game_session.id,
+            "nickname": player.nickname,
+            "owner_id": game_session.owner.id,
             "game_code": game_session.game_code,
         }
         return Response(response_data, status=status.HTTP_201_CREATED)
