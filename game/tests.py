@@ -116,7 +116,22 @@ class GameSessionTestCase(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_view_start_game_session_with_owner(self):
+    def test_view_create_join_game_session_with_full_game_session(self):
+        game_code = "123456"
+        game_session = GameSession.objects.create(game_code=game_code)
+        game_session.owner = Player.objects.create(nickname="test", game_session=game_session)
+        game_session.player_set.add(game_session.owner)
+        game_session.save()
+
+        for i in range(GameSession.MAXIMUM_PLAYERS):
+            Player.objects.create(nickname=f"test{i}", game_session=game_session)
+
+        response = self.client.post(
+            reverse("game:create_join_game_session"), data={"nickname": "NEW_PLAYER", "game_code": game_code}
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_view_start_game_session_as_owner(self):
         game_session = GameSession.objects.create(game_code="123456")
         player = Player.objects.create(nickname="test", game_session=game_session)
         player2 = Player.objects.create(nickname="test2", game_session=game_session)
