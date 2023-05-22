@@ -5,6 +5,9 @@ from django.db import models
 
 
 class GameSession(models.Model):
+    MINIMUM_PLAYERS = 2
+    MAXIMUM_PLAYERS = 8
+
     id = models.AutoField(primary_key=True)
     game_code = models.CharField(max_length=6, null=False)
     has_started = models.BooleanField(default=False, null=False)

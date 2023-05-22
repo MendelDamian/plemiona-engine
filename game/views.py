@@ -17,9 +17,7 @@ class CreateJoinGameSessionView(APIView):
     permission_classes = []
 
     def post(self, request, *args, **kwargs):
-        error = {
-            "errors": {}
-        }
+        error = {"errors": {}}
 
         serializer = CreateGameSessionSerializer(data=request.data)
         if serializer.is_valid() is False:
@@ -44,14 +42,18 @@ class CreateJoinGameSessionView(APIView):
             if game_session.has_started:
                 error["errors"]["Game session"] = ["has already started."]
                 return Response(error, status=status.HTTP_400_BAD_REQUEST)
+
+            if game_session.player_set.count() >= GameSession.MAXIMUM_PLAYERS:
+                error["errors"]["Game session"] = ["is full."]
+                return Response(error, status=status.HTTP_400_BAD_REQUEST)
         else:
             game_session = GameSession.objects.create(owner=None)
 
         if Player.objects.filter(game_session=game_session, nickname=nickname).exists():
             error["errors"]["Nickname"] = ["is already in use."]
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
-        player = Player.objects.create(game_session=game_session, nickname=nickname)
 
+        player = Player.objects.create(game_session=game_session, nickname=nickname)
         if not game_session.owner:
             game_session.owner = player
             game_session.save()
@@ -70,9 +72,7 @@ class CreateJoinGameSessionView(APIView):
 
 class StartGameSessionView(APIView):
     def post(self, request, *args, **kwargs):
-        error = {
-            "errors": {}
-        }
+        error = {"errors": {}}
 
         player = request.user
         if player != player.game_session.owner:
@@ -83,8 +83,10 @@ class StartGameSessionView(APIView):
             error["errors"]["Game session"] = ["has already started."]
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
 
-        if player.game_session.player_set.count() < 2:
-            error["errors"]["Game session"] = ["requires minimum 2 players to start the game."]
+        if player.game_session.player_set.count() < GameSession.MINIMUM_PLAYERS:
+            error["errors"]["Game session"] = [
+                f"requires minimum {GameSession.MINIMUM_PLAYERS} players to start the game."
+            ]
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
 
         player.game_session.has_started = True
