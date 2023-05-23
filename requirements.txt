@@ -1,0 +1,5 @@
+python-decouple
+django
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
