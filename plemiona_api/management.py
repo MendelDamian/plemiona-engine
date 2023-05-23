@@ -60,3 +60,52 @@ class JWTAuthentication(authentication.BaseAuthentication):
     def get_the_token_from_header(cls, token):
         token = token.replace("Bearer", "").replace(" ", "")  # clean the token
         return token
+
+from channels.db import database_sync_to_async
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.tokens import UntypedToken
+from channels.middleware import BaseMiddleware
+from channels.auth import AuthMiddlewareStack
+from django.db import close_old_connections
+from urllib.parse import parse_qs
+from jwt import decode as jwt_decode
+from django.conf import settings
+
+@database_sync_to_async
+def get_player(validated_token):
+    try:
+        return Player.objects.get(id=validated_token["player_id"])
+
+    except Player.DoesNotExist:
+        return None
+
+
+class JwtAuthMiddleware(BaseMiddleware):
+    def __init__(self, inner):
+        self.inner = inner
+
+    async def __call__(self, scope, receive, send):
+        # Close old database connections to prevent usage of timed out connections
+        close_old_connections()
+
+        # Get the token
+        token = parse_qs(scope["query_string"].decode("utf8"))["token"][0]
+
+        # Try to authenticate the user
+        try:
+            # This will automatically validate the token and raise an error if token is invalid
+            UntypedToken(token)
+        except (InvalidToken, TokenError) as e:
+            # Token is invalid
+            return None
+        else:
+            #  Then token is valid, decode it
+            decoded_data = jwt_decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+
+            # Get the user using ID
+            scope["player"] = await get_player(validated_token=decoded_data)
+        return await super().__call__(scope, receive, send)
+
+
+def JwtAuthMiddlewareStack(inner):
+    return JwtAuthMiddleware(AuthMiddlewareStack(inner))
