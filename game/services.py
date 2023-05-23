@@ -1,5 +1,5 @@
-from game.models import GameSession, Player
 from game import exceptions
+from game.models import GameSession, Player
 
 
 class GameSessionService:
