@@ -1,64 +1,24 @@
-from rest_framework import serializers, status
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from game.models import GameSession, Player
-
-
-class CreateGameSessionSerializer(serializers.Serializer):
-    nickname = serializers.CharField(
-        max_length=Player.NICKNAME_MAX_LENGTH, min_length=Player.NICKNAME_MIN_LENGTH, required=True
-    )
-    game_code = serializers.CharField(max_length=6, required=False, allow_blank=True)
+from game.serializers import CreateGameSessionSerializer
+from game.services import GameSessionService
 
 
 class CreateJoinGameSessionView(APIView):
     permission_classes = []
 
     def post(self, request, *args, **kwargs):
-        error = {"errors": {}}
-
         serializer = CreateGameSessionSerializer(data=request.data)
-        if serializer.is_valid() is False:
-            serializer_errors = serializer.errors
-            for element in serializer_errors:
-                error["errors"][element.capitalize()] = serializer_errors[element]
-
-            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
 
         nickname = serializer.validated_data["nickname"]
         game_code = serializer.validated_data.pop("game_code", None)
-        if game_code and game_code.strip() == "":
-            game_code = None
 
-        if game_code:
-            try:
-                game_session = GameSession.objects.get(game_code=game_code)
-            except GameSession.DoesNotExist:
-                error["errors"]["Game session"] = ["does not exist."]
-                return Response(error, status=status.HTTP_404_NOT_FOUND)
-
-            if game_session.has_started:
-                error["errors"]["Game session"] = ["has already started."]
-                return Response(error, status=status.HTTP_400_BAD_REQUEST)
-
-            if game_session.player_set.count() >= GameSession.MAXIMUM_PLAYERS:
-                error["errors"]["Game session"] = ["is full."]
-                return Response(error, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            game_session = GameSession.objects.create(owner=None)
-
-        if Player.objects.filter(game_session=game_session, nickname=nickname).exists():
-            error["errors"]["Nickname"] = ["is already in use."]
-            return Response(error, status=status.HTTP_400_BAD_REQUEST)
-
-        player = Player.objects.create(game_session=game_session, nickname=nickname)
-        if not game_session.owner:
-            game_session.owner = player
-            game_session.save()
-
-        game_session.player_set.add(player)
+        game_session = GameSessionService.create_game_session(game_code)
+        player = GameSessionService.join_game_session(game_session, nickname)
 
         refresh = RefreshToken.for_user(player)
         response_data = {
@@ -74,24 +34,5 @@ class CreateJoinGameSessionView(APIView):
 
 class StartGameSessionView(APIView):
     def post(self, request, *args, **kwargs):
-        error = {"errors": {}}
-
-        player = request.user
-        if player != player.game_session.owner:
-            error["errors"]["Player"] = ["is not the owner."]
-            return Response(error, status=status.HTTP_403_FORBIDDEN)
-
-        if player.game_session.has_started:
-            error["errors"]["Game session"] = ["has already started."]
-            return Response(error, status=status.HTTP_400_BAD_REQUEST)
-
-        if player.game_session.player_set.count() < GameSession.MINIMUM_PLAYERS:
-            error["errors"]["Game session"] = [
-                f"requires minimum {GameSession.MINIMUM_PLAYERS} players to start the game."
-            ]
-            return Response(error, status=status.HTTP_400_BAD_REQUEST)
-
-        player.game_session.has_started = True
-        player.game_session.save()
-
+        GameSessionService.start_game_session(request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
