@@ -17,7 +17,7 @@ class CreateJoinGameSessionView(APIView):
         nickname = serializer.validated_data["nickname"]
         game_code = serializer.validated_data.pop("game_code", None)
 
-        game_session = GameSessionService.create_game_session(game_code)
+        game_session = GameSessionService.get_or_create_game_session(game_code)
         player = GameSessionService.join_game_session(game_session, nickname)
 
         refresh = RefreshToken.for_user(player)

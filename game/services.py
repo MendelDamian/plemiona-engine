@@ -4,7 +4,7 @@ from game.models import GameSession, Player
 
 class GameSessionService:
     @staticmethod
-    def create_game_session(game_code=None):
+    def get_or_create_game_session(game_code=None):
         if game_code:
             try:
                 game_session = GameSession.objects.get(game_code=game_code)
