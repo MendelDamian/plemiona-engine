@@ -1,4 +1,4 @@
-from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.exceptions import APIException
 
 
 class GameSessionCreationException(APIException):
@@ -19,7 +19,6 @@ class GameSessionAlreadyStartedException(APIException):
 class NicknameAlreadyInUseException(APIException):
     status_code = 400
     default_detail = {'Player': ['Nickname already in use.']}
-
 
 
 class MinimumPlayersNotReachedException(APIException):
