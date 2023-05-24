@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from urllib.parse import parse_qs
 
 import jwt
-from jwt import decode as jwt_decode
 from rest_framework import authentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
@@ -101,7 +100,7 @@ class JwtAuthMiddleware(BaseMiddleware):
             return await self.inner(scope, receive, send)
         else:
             #  Then token is valid, decode it
-            decoded_data = jwt_decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            decoded_data = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
 
             # Get the user using ID
             scope["player"] = await get_player(validated_token=decoded_data)
