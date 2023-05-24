@@ -5,7 +5,7 @@ from asgiref.sync import async_to_sync
 from game.models import Player
 from game.serializers import PlayerSerializer
 
-class LobbyConsumer(WebsocketConsumer):
+class GameConsumer(WebsocketConsumer):
     def connect(self):
         player = self.scope.get("player", None)
         if not player:
