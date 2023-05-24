@@ -10,6 +10,7 @@ class LobbyConsumer(WebsocketConsumer):
         player = self.scope.get("player", None)
         if not player:
             self.close()
+            return
 
         self.room_group_name = player.game_session.game_code
 
