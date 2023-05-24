@@ -4,15 +4,23 @@ import string
 from django.db import models
 
 
-class GameSession(models.Model):
+class BaseModel(models.Model):
+    id = models.AutoField(primary_key=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class GameSession(BaseModel):
     MINIMUM_PLAYERS = 2
     MAXIMUM_PLAYERS = 8
 
-    id = models.AutoField(primary_key=True)
+    owner = models.ForeignKey("Player", on_delete=models.CASCADE, null=True)
     game_code = models.CharField(max_length=6, null=False)
     has_started = models.BooleanField(default=False, null=False)
-
-    owner = models.ForeignKey("Player", on_delete=models.CASCADE, null=True)
+    ended_at = models.DateTimeField(null=True, default=None)
 
     def save(self, *args, **kwargs):
         if not self.game_code:
@@ -27,13 +35,11 @@ class GameSession(models.Model):
         return self.game_code
 
 
-class Player(models.Model):
+class Player(BaseModel):
     NICKNAME_MIN_LENGTH = 3
     NICKNAME_MAX_LENGTH = 15
 
-    id = models.AutoField(primary_key=True)
     nickname = models.CharField(max_length=15, null=False)
-
     game_session = models.ForeignKey("GameSession", on_delete=models.CASCADE, null=False)
     village = models.OneToOneField("Village", on_delete=models.CASCADE, null=False)
 
@@ -53,5 +59,5 @@ class Player(models.Model):
         return self.nickname
 
 
-class Village(models.Model):
-    id = models.AutoField(primary_key=True)
+class Village(BaseModel):
+    pass
