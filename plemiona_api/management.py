@@ -88,7 +88,11 @@ class JwtAuthMiddleware(BaseMiddleware):
         close_old_connections()
 
         # Get the token
-        token = parse_qs(scope["query_string"].decode("utf8"))["token"][0]
+        token = parse_qs(scope["query_string"].decode("utf8")).get("token")
+        if not token:
+            return await self.inner(scope, receive, send)
+
+        token = token[0]
 
         # Try to authenticate the user
         try:
@@ -96,7 +100,7 @@ class JwtAuthMiddleware(BaseMiddleware):
             UntypedToken(token)
         except (InvalidToken, TokenError) as e:
             # Token is invalid
-            return None
+            return await self.inner(scope, receive, send)
         else:
             #  Then token is valid, decode it
             decoded_data = jwt_decode(token, settings.SECRET_KEY, algorithms=["HS256"])
