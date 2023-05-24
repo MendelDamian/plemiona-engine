@@ -1,11 +1,19 @@
 from datetime import datetime, timedelta
+from urllib.parse import parse_qs
 
 import jwt
+from jwt import decode as jwt_decode
 from rest_framework import authentication
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.tokens import UntypedToken
+from channels.db import database_sync_to_async
+from channels.middleware import BaseMiddleware
+from channels.auth import AuthMiddlewareStack
+from django.db import close_old_connections
+from django.conf import settings
 
 from game.models import Player
-
 
 class JWTAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
@@ -59,16 +67,6 @@ class JWTAuthentication(authentication.BaseAuthentication):
     def get_the_token_from_header(cls, token):
         token = token.replace("Bearer", "").replace(" ", "")  # clean the token
         return token
-
-from channels.db import database_sync_to_async
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from rest_framework_simplejwt.tokens import UntypedToken
-from channels.middleware import BaseMiddleware
-from channels.auth import AuthMiddlewareStack
-from django.db import close_old_connections
-from urllib.parse import parse_qs
-from jwt import decode as jwt_decode
-from django.conf import settings
 
 @database_sync_to_async
 def get_player(validated_token):
