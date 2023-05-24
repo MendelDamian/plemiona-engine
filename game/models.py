@@ -60,4 +60,17 @@ class Player(BaseModel):
 
 
 class Village(BaseModel):
-    pass
+    wood = models.IntegerField(default=0, null=False)
+    iron = models.IntegerField(default=0, null=False)
+    clay = models.IntegerField(default=0, null=False)
+    morale = models.IntegerField(default=100, null=False)
+
+    def __str__(self):
+        return f"Village {self.id}"
+
+    def get_resources(self):
+        return {
+            "wood": self.wood,
+            "iron": self.iron,
+            "clay": self.clay,
+        }
