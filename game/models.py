@@ -3,14 +3,7 @@ import string
 
 from django.db import models
 
-
-class BaseModel(models.Model):
-    id = models.AutoField(primary_key=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
+from utils.models import BaseModel
 
 
 class GameSession(BaseModel):
@@ -64,6 +57,14 @@ class Village(BaseModel):
     iron = models.IntegerField(default=0, null=False)
     clay = models.IntegerField(default=0, null=False)
     morale = models.IntegerField(default=100, null=False)
+
+    # Buildings
+    town_hall = models.ForeignKey("building.TownHall", on_delete=models.SET_NULL, null=True, default=None)
+    granary = models.ForeignKey("building.Granary", on_delete=models.SET_NULL, null=True, default=None)
+    iron_mine = models.ForeignKey("building.IronMine", on_delete=models.SET_NULL, null=True, default=None)
+    clay_pit = models.ForeignKey("building.ClayPit", on_delete=models.SET_NULL, null=True, default=None)
+    sawmill = models.ForeignKey("building.Sawmill", on_delete=models.SET_NULL, null=True, default=None)
+    barracks = models.ForeignKey("building.Barracks", on_delete=models.SET_NULL, null=True, default=None)
 
     def __str__(self):
         return f"Village {self.id}"
