@@ -48,6 +48,3 @@ class GameSessionService:
 
         player.game_session.has_started = True
         player.game_session.save()
-
-
-
