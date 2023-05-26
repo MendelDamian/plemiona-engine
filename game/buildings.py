@@ -43,7 +43,6 @@ class ResourceBuilding(Building, ABC):
 
 @dataclass
 class TownHall(Building):
-    level: int = 1
     MAX_LEVEL = 3
     upgrade_time: timedelta = timedelta(minutes=10)
 
