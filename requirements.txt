@@ -4,3 +4,5 @@ djangorestframework
 djangorestframework-simplejwt
 django-cors-headers
 django-extensions
+daphne
+channels
