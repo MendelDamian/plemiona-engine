@@ -61,6 +61,10 @@ class Village(BaseModel):
     iron = models.IntegerField(default=0, null=False)
     clay = models.IntegerField(default=0, null=False)
 
+    @property
+    def resources(self):
+        return {"wood": self.wood, "iron": self.iron, "clay": self.clay}
+
     # Level of the buildings
     town_hall_level = models.IntegerField(default=1, null=False)
     granary_level = models.IntegerField(default=1, null=False)
@@ -95,10 +99,3 @@ class Village(BaseModel):
 
     def __str__(self):
         return f"Village {self.id}"
-
-    def get_resources(self):
-        return {
-            "wood": self.wood,
-            "iron": self.iron,
-            "clay": self.clay,
-        }
