@@ -1,11 +1,12 @@
 from abc import ABC
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import ClassVar
 
 
 @dataclass
 class Building(ABC):
-    max_level: int = 1
+    MAX_LEVEL: ClassVar[int] = 1
     level: int = 1
     upgrade_time: timedelta = timedelta(minutes=1)
 
@@ -16,16 +17,16 @@ class Building(ABC):
 
     def get_upgrade_cost(self) -> dict:
         return {
-            'wood': self.wood_cost * self.level,
-            'clay': self.clay_cost * self.level,
-            'iron': self.iron_cost * self.level
+            "wood": self.wood_cost * self.level,
+            "clay": self.clay_cost * self.level,
+            "iron": self.iron_cost * self.level,
         }
 
     def get_upgrade_time(self) -> timedelta:
         return self.upgrade_time * self.level
 
     def upgrade(self) -> None:
-        if self.level < self.max_level:
+        if self.level < self.MAX_LEVEL:
             self.level += 1
 
     def downgrade(self) -> None:
@@ -43,7 +44,7 @@ class ResourceBuilding(Building, ABC):
 @dataclass
 class TownHall(Building):
     level: int = 1
-    max_level: int = 3
+    MAX_LEVEL = 3
     upgrade_time: timedelta = timedelta(minutes=10)
 
     # Costs
@@ -54,7 +55,7 @@ class TownHall(Building):
 
 @dataclass
 class Granary(Building):
-    max_level: int = 3
+    MAX_LEVEL = 3
     upgrade_time: timedelta = timedelta(minutes=3)
 
     # Costs
@@ -71,7 +72,7 @@ class Granary(Building):
 
 @dataclass
 class IronMine(ResourceBuilding):
-    max_level: int = 3
+    MAX_LEVEL = 3
     upgrade_time: timedelta = timedelta(minutes=5)
 
     # Costs
@@ -82,7 +83,7 @@ class IronMine(ResourceBuilding):
 
 @dataclass
 class ClayPit(ResourceBuilding):
-    max_level: int = 3
+    MAX_LEVEL = 3
     upgrade_time: timedelta = timedelta(minutes=5)
 
     # Costs
@@ -93,7 +94,7 @@ class ClayPit(ResourceBuilding):
 
 @dataclass
 class Sawmill(ResourceBuilding):
-    max_level: int = 3
+    MAX_LEVEL = 3
     upgrade_time: timedelta = timedelta(minutes=5)
 
     # Costs
@@ -104,7 +105,7 @@ class Sawmill(ResourceBuilding):
 
 @dataclass
 class Barracks(Building):
-    max_level: int = 3
+    MAX_LEVEL = 3
     upgrade_time: timedelta = timedelta(minutes=5)
 
     # Costs
