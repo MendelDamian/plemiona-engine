@@ -147,7 +147,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-    "DEFAULT_AUTHENTICATION_CLASSES": ("plemiona_api.management.JWTAuthentication",),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("utils.jwt_authentication.JWTAuthentication",),
     'EXCEPTION_HANDLER': 'utils.exception_handler.custom_exception_handler',
 }
 
