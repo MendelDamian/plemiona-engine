@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     "game",
-    "game.building",
+    "django_extensions",
 ]
 
 MIDDLEWARE = [
@@ -148,7 +148,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": ("plemiona_api.management.JWTAuthentication",),
-    'EXCEPTION_HANDLER': 'plemiona_api.utils.custom_exception_handler',
+    'EXCEPTION_HANDLER': 'utils.exception_handler.custom_exception_handler',
 }
 
 SIMPLE_JWT = {

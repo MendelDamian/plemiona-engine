@@ -3,6 +3,7 @@ import string
 
 from django.db import models
 
+from game import buildings
 from utils.models import BaseModel
 
 
@@ -53,18 +54,44 @@ class Player(BaseModel):
 
 
 class Village(BaseModel):
+    morale = models.IntegerField(default=100, null=False)
+
+    # Resoources
     wood = models.IntegerField(default=0, null=False)
     iron = models.IntegerField(default=0, null=False)
     clay = models.IntegerField(default=0, null=False)
-    morale = models.IntegerField(default=100, null=False)
 
-    # Buildings
-    town_hall = models.ForeignKey("building.TownHall", on_delete=models.SET_NULL, null=True, default=None)
-    granary = models.ForeignKey("building.Granary", on_delete=models.SET_NULL, null=True, default=None)
-    iron_mine = models.ForeignKey("building.IronMine", on_delete=models.SET_NULL, null=True, default=None)
-    clay_pit = models.ForeignKey("building.ClayPit", on_delete=models.SET_NULL, null=True, default=None)
-    sawmill = models.ForeignKey("building.Sawmill", on_delete=models.SET_NULL, null=True, default=None)
-    barracks = models.ForeignKey("building.Barracks", on_delete=models.SET_NULL, null=True, default=None)
+    # Level of the buildings
+    town_hall_level = models.IntegerField(default=1, null=False)
+    granary_level = models.IntegerField(default=1, null=False)
+    iron_mine_level = models.IntegerField(default=1, null=False)
+    clay_pit_level = models.IntegerField(default=1, null=False)
+    sawmill_level = models.IntegerField(default=1, null=False)
+    barracks_level = models.IntegerField(default=1, null=False)
+
+    @property
+    def town_hall(self):
+        return buildings.TownHall(level=self.town_hall_level)
+
+    @property
+    def granary(self):
+        return buildings.Granary(level=self.granary_level)
+
+    @property
+    def iron_mine(self):
+        return buildings.IronMine(level=self.iron_mine_level)
+
+    @property
+    def clay_pit(self):
+        return buildings.ClayPit(level=self.clay_pit_level)
+
+    @property
+    def sawmill(self):
+        return buildings.Sawmill(level=self.sawmill_level)
+
+    @property
+    def barracks(self):
+        return buildings.Barracks(level=self.barracks_level)
 
     def __str__(self):
         return f"Village {self.id}"
