@@ -1,5 +1,6 @@
 import random
 import string
+from datetime import timedelta
 
 from django.db import models
 
@@ -10,6 +11,7 @@ from utils.models import BaseModel
 class GameSession(BaseModel):
     MINIMUM_PLAYERS = 2
     MAXIMUM_PLAYERS = 8
+    DURATION = timedelta(hours=1)
 
     owner = models.ForeignKey("Player", on_delete=models.CASCADE, null=True)
     game_code = models.CharField(max_length=6, null=False)
