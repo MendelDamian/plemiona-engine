@@ -185,6 +185,3 @@ class GameSessionTestCase(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertFalse(game_session.has_started)
-
-
-
