@@ -13,7 +13,7 @@ class GameSession(BaseModel):
     MAXIMUM_PLAYERS = 8
     DURATION = timedelta(hours=1)
 
-    owner = models.OneToOneField("Player", on_delete=models.CASCADE, null=False, related_name="game_session")
+    owner = models.OneToOneField("Player", on_delete=models.CASCADE, null=True, related_name="owned_game_session")
     game_code = models.CharField(max_length=6, null=False)
     has_started = models.BooleanField(default=False, null=False)
     ended_at = models.DateTimeField(null=True, default=None)
