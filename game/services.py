@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from game import exceptions
 from game.models import GameSession, Player
 
@@ -37,14 +39,16 @@ class GameSessionService:
 
     @staticmethod
     def start_game_session(player):
-        if player != player.game_session.owner:
+        game_session = player.game_session
+        if player != game_session.owner:
             raise exceptions.NotOwnerException
 
-        if player.game_session.has_started:
+        if game_session.has_started:
             raise exceptions.GameSessionAlreadyStartedException
 
-        if player.game_session.player_set.count() < GameSession.MINIMUM_PLAYERS:
+        if game_session.player_set.count() < GameSession.MINIMUM_PLAYERS:
             raise exceptions.MinimumPlayersNotReachedException
 
-        player.game_session.has_started = True
-        player.game_session.save()
+        game_session.has_started = True
+        game_session.ended_at = timezone.now() + GameSession.DURATION
+        game_session.save()
