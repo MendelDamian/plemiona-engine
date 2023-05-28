@@ -11,7 +11,8 @@ class Building:
     CLAY_COST: ClassVar[int] = 0
     IRON_COST: ClassVar[int] = 0
 
-    level: int = 1
+    def __init__(self, level: int = 1) -> None:
+        self.level = level
 
     def get_upgrade_cost(self) -> dict:
         return {
