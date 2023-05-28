@@ -14,6 +14,7 @@ from django.conf import settings
 
 from game.models import Player
 
+
 class JWTAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
         # Extract the JWT from the Authorization header
