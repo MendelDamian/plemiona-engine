@@ -6,6 +6,7 @@ from django.db import models
 
 from game import buildings
 from utils.models import BaseModel
+from game import exceptions
 
 
 class GameSession(BaseModel):
@@ -112,4 +113,8 @@ class Village(BaseModel):
             'barracks': self.barracks
         }
 
-        return buildings_dict.get(name, None)
+        building = buildings_dict.get(name, None)
+        if not building:
+            raise exceptions.BuildingNameException
+
+        return building
