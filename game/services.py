@@ -1,7 +1,25 @@
+from channels.layers import get_channel_layer
 from django.utils import timezone
 
 from game import exceptions
 from game.models import GameSession, Player
+from game.consumers import GameConsumer
+
+
+class GameSessionConsumerService:
+    @staticmethod
+    def send_players_list(game_session):
+        game_consumer = GameConsumer()
+        game_consumer.room_group_name = game_session.game_code
+        game_consumer.channel_layer = get_channel_layer()
+        game_consumer.send_players_list(game_session)
+
+    @staticmethod
+    def send_start_game_session(game_session):
+        game_consumer = GameConsumer()
+        game_consumer.room_group_name = game_session.game_code
+        game_consumer.channel_layer = get_channel_layer()
+        game_consumer.send_start_game_session()
 
 
 class GameSessionService:
@@ -52,3 +70,5 @@ class GameSessionService:
         game_session.has_started = True
         game_session.ended_at = timezone.now() + GameSession.DURATION
         game_session.save()
+
+        GameSessionConsumerService.send_start_game_session(game_session)
