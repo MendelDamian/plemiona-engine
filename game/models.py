@@ -101,3 +101,15 @@ class Village(BaseModel):
 
     def __str__(self):
         return f"Village {self.id}"
+
+    def get_building(self, name):
+        buildings_dict = {
+            'town_hall': self.town_hall,
+            'granary': self.granary,
+            'iron_mine': self.iron_mine,
+            'clay_pit': self.clay_pit,
+            'sawmill': self.sawmill,
+            'barracks': self.barracks
+        }
+
+        return buildings_dict.get(name, None)
