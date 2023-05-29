@@ -1,6 +1,8 @@
 from datetime import timedelta
 from typing import ClassVar
 
+from game import exceptions
+
 
 class Building:
     MAX_LEVEL: ClassVar[int] = 1
@@ -30,6 +32,8 @@ class Building:
     def upgrade(self) -> None:
         if self.level < self.MAX_LEVEL:
             self.level += 1
+        else:
+            raise exceptions.BuildingMaxLevelException
 
     def downgrade(self) -> None:
         if self.level > 1:
