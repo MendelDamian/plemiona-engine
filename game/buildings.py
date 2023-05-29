@@ -6,19 +6,22 @@ class Building:
     MAX_LEVEL: ClassVar[int] = 1
     BASE_UPGRADE_TIME: ClassVar[timedelta] = timedelta(minutes=1)
 
+    # Multiplier
+    COST_MULTIPLIER: ClassVar[float] = 0
+
     # Upgrade costs
-    WOOD_COST: ClassVar[int] = 0
-    CLAY_COST: ClassVar[int] = 0
-    IRON_COST: ClassVar[int] = 0
+    BASE_WOOD_COST: ClassVar[int] = 0
+    BASE_CLAY_COST: ClassVar[int] = 0
+    BASE_IRON_COST: ClassVar[int] = 0
 
     def __init__(self, level: int = 1) -> None:
         self.level = level
 
     def get_upgrade_cost(self) -> dict:
         return {
-            "wood": self.WOOD_COST * self.level,
-            "clay": self.CLAY_COST * self.level,
-            "iron": self.IRON_COST * self.level,
+            "wood": self.BASE_WOOD_COST * self.level,
+            "clay": self.BASE_CLAY_COST * self.level,
+            "iron": self.BASE_IRON_COST * self.level,
         }
 
     def get_upgrade_time(self) -> timedelta:
@@ -34,16 +37,19 @@ class Building:
 
 
 class ResourceBuilding(Building):
+    # Multiplier
+    PRODUCTION_MULTIPLIER: ClassVar[float] = 0
+
     # Producation per second
-    WOOD_PRODUCATION: ClassVar[float] = 0
-    CLAY_PRODUCATION: ClassVar[float] = 0
-    IRON_PRODUCATION: ClassVar[float] = 0
+    BASE_WOOD_PRODUCTION: ClassVar[float] = 0
+    BASE_CLAY_PRODUCTION: ClassVar[float] = 0
+    BASE_IRON_PRODUCTION: ClassVar[float] = 0
 
     def get_production(self) -> dict:
         return {
-            "wood": self.WOOD_PRODUCATION * self.level,
-            "clay": self.CLAY_PRODUCATION * self.level,
-            "iron": self.IRON_PRODUCATION * self.level,
+            "wood": self.BASE_WOOD_PRODUCTION * self.level,
+            "clay": self.BASE_CLAY_PRODUCTION * self.level,
+            "iron": self.BASE_IRON_PRODUCTION * self.level,
         }
 
 
@@ -52,19 +58,19 @@ class TownHall(Building):
     BASE_UPGRADE_TIME = timedelta(minutes=10)
 
     # Costs
-    WOOD_COST = 200
-    CLAY_COST = 170
-    IRON_COST = 90
+    BASE_WOOD_COST = 200
+    BASE_CLAY_COST = 170
+    BASE_IRON_COST = 90
 
 
 class Granary(Building):
-    MAX_LEVEL = 3
+    MAX_LEVEL = 15
     BASE_UPGRADE_TIME = timedelta(minutes=3)
 
     # Costs
-    WOOD_COST = 100
-    CLAY_COST = 100
-    IRON_COST = 100
+    BASE_WOOD_COST = 100
+    BASE_CLAY_COST = 100
+    BASE_IRON_COST = 100
 
     # Capacity
     CAPACITY: ClassVar[int] = 1000
@@ -74,42 +80,42 @@ class Granary(Building):
 
 
 class IronMine(ResourceBuilding):
-    MAX_LEVEL = 3
+    MAX_LEVEL = 15
     BASE_UPGRADE_TIME = timedelta(minutes=5)
 
     # Costs
-    WOOD_COST = 100
-    CLAY_COST = 80
-    IRON_COST = 30
+    BASE_WOOD_COST = 100
+    BASE_CLAY_COST = 80
+    BASE_IRON_COST = 30
 
     # Producation per second
-    IRON_PRODUCATION = 0.5
+    BASE_IRON_PRODUCTION = 0.5
 
 
 class ClayPit(ResourceBuilding):
-    MAX_LEVEL = 3
+    MAX_LEVEL = 15
     BASE_UPGRADE_TIME = timedelta(minutes=5)
 
     # Costs
-    WOOD_COST = 30
-    CLAY_COST = 80
-    IRON_COST = 100
+    BASE_WOOD_COST = 30
+    BASE_CLAY_COST = 80
+    BASE_IRON_COST = 100
 
     # Producation per second
-    CLAY_PRODUCATION = 0.5
+    BASE_CLAY_PRODUCTION = 0.5
 
 
 class Sawmill(ResourceBuilding):
-    MAX_LEVEL = 3
+    MAX_LEVEL = 15
     BASE_UPGRADE_TIME = timedelta(minutes=5)
 
     # Costs
-    WOOD_COST = 30
-    CLAY_COST = 100
-    IRON_COST = 80
+    BASE_WOOD_COST = 30
+    BASE_CLAY_COST = 100
+    BASE_IRON_COST = 80
 
     # Producation per second
-    WOOD_PRODUCATION = 0.5
+    BASE_WOOD_PRODUCTION = 0.5
 
 
 class Barracks(Building):
@@ -117,6 +123,6 @@ class Barracks(Building):
     BASE_UPGRADE_TIME = timedelta(minutes=5)
 
     # Costs
-    WOOD_COST = 200
-    CLAY_COST = 170
-    IRON_COST = 90
+    BASE_WOOD_COST = 200
+    BASE_CLAY_COST = 170
+    BASE_IRON_COST = 90
