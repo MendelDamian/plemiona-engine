@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     "game",
+    "django_extensions",
 ]
 
 ASGI_APPLICATION = "plemiona_api.asgi.application"
@@ -155,8 +156,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-    "DEFAULT_AUTHENTICATION_CLASSES": ("plemiona_api.management.JWTAuthentication",),
-    'EXCEPTION_HANDLER': 'plemiona_api.utils.custom_exception_handler',
+    "DEFAULT_AUTHENTICATION_CLASSES": ("utils.jwt_authentication.JWTAuthentication",),
+    'EXCEPTION_HANDLER': 'utils.exception_handler.custom_exception_handler',
 }
 
 SIMPLE_JWT = {
