@@ -1,6 +1,7 @@
 import random
 import string
 from datetime import timedelta
+from typing import Optional
 
 from django.db import models
 from django.utils import timezone
@@ -60,9 +61,11 @@ class Village(BaseModel):
     morale = models.IntegerField(default=100, null=False)
 
     # Resoources
-    wood = models.IntegerField(default=0, null=False)
-    iron = models.IntegerField(default=0, null=False)
-    clay = models.IntegerField(default=0, null=False)
+    wood = models.IntegerField(default=150, null=False)
+    iron = models.IntegerField(default=150, null=False)
+    clay = models.IntegerField(default=150, null=False)
+
+    last_resources_update = models.DateTimeField(null=True, default=None)
 
     @property
     def resources(self):
@@ -101,7 +104,12 @@ class Village(BaseModel):
         return buildings.Barracks(level=self.barracks_level)
 
     def update_resources(self):
-        seconds_passed = (timezone.now() - self.updated_at).total_seconds()
+        if not self.last_resources_update:
+            self.last_resources_update = timezone.now()
+            self.save()
+            return
+
+        seconds_passed = (timezone.now() - self.last_resources_update).total_seconds()
 
         self.wood += self.sawmill.get_production(seconds_passed)
         self.iron += self.iron_mine.get_production(seconds_passed)
