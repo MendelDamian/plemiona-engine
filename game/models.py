@@ -3,6 +3,7 @@ import string
 from datetime import timedelta
 
 from django.db import models
+from django.utils import timezone
 
 from game import buildings
 from utils.models import BaseModel
@@ -98,6 +99,15 @@ class Village(BaseModel):
     @property
     def barracks(self):
         return buildings.Barracks(level=self.barracks_level)
+
+    def update_resources(self):
+        seconds_passed = (timezone.now() - self.updated_at).total_seconds()
+
+        self.wood += self.sawmill.get_production(seconds_passed)
+        self.iron += self.iron_mine.get_production(seconds_passed)
+        self.clay += self.clay_pit.get_production(seconds_passed)
+
+        self.save()
 
     def __str__(self):
         return f"Village {self.id}"
