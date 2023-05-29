@@ -33,20 +33,6 @@ class Building:
             self.level -= 1
 
 
-class ResourceBuilding(Building):
-    # Producation per second
-    WOOD_PRODUCATION: ClassVar[float] = 0
-    CLAY_PRODUCATION: ClassVar[float] = 0
-    IRON_PRODUCATION: ClassVar[float] = 0
-
-    def get_production(self) -> dict:
-        return {
-            "wood": self.WOOD_PRODUCATION * self.level,
-            "clay": self.CLAY_PRODUCATION * self.level,
-            "iron": self.IRON_PRODUCATION * self.level,
-        }
-
-
 class TownHall(Building):
     MAX_LEVEL = 3
     BASE_UPGRADE_TIME = timedelta(minutes=10)
@@ -73,7 +59,7 @@ class Granary(Building):
         return self.CAPACITY * self.level
 
 
-class IronMine(ResourceBuilding):
+class IronMine(Building):
     MAX_LEVEL = 3
     BASE_UPGRADE_TIME = timedelta(minutes=5)
 
@@ -83,10 +69,13 @@ class IronMine(ResourceBuilding):
     IRON_COST = 30
 
     # Producation per second
-    IRON_PRODUCATION = 0.5
+    IRON_PRODUCATION: ClassVar[float] = 0.5
+
+    def get_production(self, seconds: float = 1.0) -> float:
+        return self.IRON_PRODUCATION * self.level * seconds
 
 
-class ClayPit(ResourceBuilding):
+class ClayPit(Building):
     MAX_LEVEL = 3
     BASE_UPGRADE_TIME = timedelta(minutes=5)
 
@@ -96,10 +85,13 @@ class ClayPit(ResourceBuilding):
     IRON_COST = 100
 
     # Producation per second
-    CLAY_PRODUCATION = 0.5
+    CLAY_PRODUCATION: ClassVar[float] = 0.5
+
+    def get_production(self, seconds: float = 1.0) -> float:
+        return self.CLAY_PRODUCATION * self.level * seconds
 
 
-class Sawmill(ResourceBuilding):
+class Sawmill(Building):
     MAX_LEVEL = 3
     BASE_UPGRADE_TIME = timedelta(minutes=5)
 
@@ -109,7 +101,10 @@ class Sawmill(ResourceBuilding):
     IRON_COST = 80
 
     # Producation per second
-    WOOD_PRODUCATION = 0.5
+    WOOD_PRODUCATION: ClassVar[float] = 0.5
+
+    def get_production(self, seconds: float = 1.0) -> float:
+        return self.WOOD_PRODUCATION * self.level * seconds
 
 
 class Barracks(Building):
