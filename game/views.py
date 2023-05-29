@@ -5,6 +5,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from game.serializers import CreateGameSessionSerializer
 from game.services import GameSessionService
+from game import exceptions
 
 
 class CreateJoinGameSessionView(APIView):
@@ -35,4 +36,24 @@ class CreateJoinGameSessionView(APIView):
 class StartGameSessionView(APIView):
     def post(self, request, *args, **kwargs):
         GameSessionService.start_game_session(request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UpgradeBuildingView(APIView):
+    def post(self, request, name, *args, **kwargs):
+        village = request.user.village
+        building = village.get_building(name)
+        upgrade_costs = building.get_upgrade_cost()
+        village_resources = village.resources
+
+        for resource in upgrade_costs:
+            if village_resources[resource] < upgrade_costs[resource]:
+                raise exceptions.ResourcesException
+
+        for resource in upgrade_costs:
+            village_resources[resource] -= upgrade_costs[resource]
+
+        village.save()
+        building.upgrade()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
