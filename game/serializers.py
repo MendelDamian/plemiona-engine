@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from game.models import Player
+from game.models import Player, Village
 
 
 class PlayerInListSerializer(serializers.ModelSerializer):
@@ -69,16 +69,22 @@ class BarracksSerializer(BuildingSerializer):
     pass
 
 
-class VillageSerializer(serializers.Serializer):
-    morale = serializers.IntegerField()
-    town_hall = TownHallSerializer()
-    granary = GranarySerializer()
-    iron_mine = IronMineSerializer()
-    clay_pit = ClayPitSerializer()
-    sawmill = SawmillSerializer()
-    barracks = BarracksSerializer()
+class VillageSerializer(serializers.ModelSerializer):
+    town_hall = BuildingSerializer()
+    granary = BuildingSerializer()
+    iron_mine = BuildingSerializer()
+    clay_pit = BuildingSerializer()
+    sawmill = BuildingSerializer()
+    barracks = BuildingSerializer()
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data["resources"] = instance.resources
-        return data
+    class Meta:
+        model = Village
+        fields = (
+            "morale",
+            "town_hall",
+            "granary",
+            "iron_mine",
+            "clay_pit",
+            "sawmill",
+            "barracks",
+        )
