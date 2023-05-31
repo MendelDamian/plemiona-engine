@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from game.models import Player, Village
+from game.models import Player, Village, GameSession
 
 
 class PlayerSerializer(serializers.ModelSerializer):
@@ -13,7 +13,7 @@ class CreateGameSessionSerializer(serializers.Serializer):
     nickname = serializers.CharField(
         max_length=Player.NICKNAME_MAX_LENGTH, min_length=Player.NICKNAME_MIN_LENGTH, required=True
     )
-    game_code = serializers.CharField(max_length=6, required=False, allow_blank=True)
+    game_code = serializers.CharField(max_length=GameSession.GAME_CODE_LENGTH, required=False, allow_blank=True)
 
 
 class BuildingSerializer(serializers.Serializer):
