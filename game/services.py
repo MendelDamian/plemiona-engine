@@ -8,25 +8,11 @@ from game.consumers import GameConsumer
 
 class GameSessionConsumerService:
     @staticmethod
-    def send_players_list(game_session):
-        game_consumer = GameConsumer()
-        game_consumer.room_group_name = game_session.game_code
-        game_consumer.channel_layer = get_channel_layer()
-        game_consumer.send_players_list(game_session)
-
-    @staticmethod
     def send_start_game_session(game_session):
         game_consumer = GameConsumer()
         game_consumer.room_group_name = game_session.game_code
         game_consumer.channel_layer = get_channel_layer()
-        game_consumer.send_start_game_session()
-
-    @staticmethod
-    def send_village_data(player):
-        game_consumer = GameConsumer()
-        game_consumer.room_group_name = player.game_session.game_code
-        game_consumer.channel_layer = get_channel_layer()
-        game_consumer.village_data(player.village)
+        game_consumer.send_start_game_session(game_session)
 
 
 class GameSessionService:
@@ -79,4 +65,3 @@ class GameSessionService:
         game_session.save()
 
         GameSessionConsumerService.send_start_game_session(game_session)
-        GameSessionConsumerService.send_village_data(player)

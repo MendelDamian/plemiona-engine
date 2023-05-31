@@ -115,6 +115,7 @@ class Village(BaseModel):
         self.iron += self.iron_mine.get_production(seconds_passed)
         self.clay += self.clay_pit.get_production(seconds_passed)
 
+        self.last_resources_update = timezone.now()
         self.save()
 
     def __str__(self):
