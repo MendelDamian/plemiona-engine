@@ -1,7 +1,6 @@
 import random
 import string
 from datetime import timedelta
-from typing import Optional
 
 from django.db import models
 from django.utils import timezone
