@@ -3,7 +3,7 @@ from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 
 from game.models import Player, GameSession
-from game.serializers import PlayerInListSerializer
+from game.serializers import PlayerInListSerializer, VillageSerializer
 
 
 class GameConsumer(WebsocketConsumer):
@@ -52,6 +52,20 @@ class GameConsumer(WebsocketConsumer):
                 },
             )
 
+        elif command_type == "fetch_buildings":
+            player = self.scope.get("player", None)
+            if not player:
+                self.close()
+                return
+
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    "type": "fetch_buildings",
+                    "player": player,
+                },
+            )
+
     def players_list(self, event):
         players_list = event["players_list"]
         owner = event["owner"]
@@ -86,6 +100,20 @@ class GameConsumer(WebsocketConsumer):
                 {
                     "type": "fetch_resources",
                     "data": data,
+                }
+            )
+        )
+
+    def fetch_buildings(self, event):
+        player: Player = event["player"]
+        player.village.refresh_from_db()
+
+        village_serializer = VillageSerializer(player.village)
+        self.send(
+            text_data=json.dumps(
+                {
+                    "type": "fetch_buildings",
+                    "data": village_serializer.data,
                 }
             )
         )

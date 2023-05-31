@@ -115,6 +115,11 @@ class Village(BaseModel):
         self.iron += self.iron_mine.get_production(seconds_passed)
         self.clay += self.clay_pit.get_production(seconds_passed)
 
+        granary_capacity = self.granary.get_capacity()
+        self.wood = min(self.wood, granary_capacity)
+        self.iron = min(self.iron, granary_capacity)
+        self.clay = min(self.clay, granary_capacity)
+
         self.last_resources_update = timezone.now()
         self.save()
 
