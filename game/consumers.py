@@ -44,17 +44,17 @@ class GameConsumer(WebsocketConsumer):
             "type": "start_game_session"
         }))
 
-    def village_data(self, player):
+    def village_data(self, village):
         self.send(text_data=json.dumps({
             "type": "village_data",
             "data": {
-                "resources": player.resources,
-                "town_hall": player.town_hall,
-                "granary": player.granary,
-                "iron_mine": player.iron_mine,
-                "clay_pit": player.clay_pit,
-                "sawmill": player.sawmill,
-                "barracks": player.barracks
+                "resources": village.resources,
+                "town_hall": village.town_hall,
+                "granary": village.granary,
+                "iron_mine": village.iron_mine,
+                "clay_pit": village.clay_pit,
+                "sawmill": village.sawmill,
+                "barracks": village.barracks
             }
         }))
 
