@@ -33,7 +33,7 @@ class GameConsumer(WebsocketConsumer):
         text_data_json = json.loads(text_data)
         command_type = text_data_json.get("type", None)
 
-        if command_type == "update_resources":
+        if command_type == "fetch_resources":
             player = self.scope.get("player", None)
             if not player:
                 self.close()
@@ -47,7 +47,7 @@ class GameConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
                 {
-                    "type": "update_resources",
+                    "type": "fetch_resources",
                     "player": player,
                 },
             )
@@ -73,7 +73,7 @@ class GameConsumer(WebsocketConsumer):
             )
         )
 
-    def update_resources(self, event):
+    def fetch_resources(self, event):
         player: Player = event["player"]
         player.village.refresh_from_db()
 
@@ -84,7 +84,7 @@ class GameConsumer(WebsocketConsumer):
         self.send(
             text_data=json.dumps(
                 {
-                    "type": "resources_update",
+                    "type": "fetch_resources",
                     "data": data,
                 }
             )
