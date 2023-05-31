@@ -3,7 +3,7 @@ from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 
 from game.models import Player, GameSession
-from game.serializers import PlayerInListSerializer, VillageSerializer
+from game.serializers import PlayerSerializer, VillageSerializer
 
 
 class GameConsumer(WebsocketConsumer):
@@ -70,8 +70,8 @@ class GameConsumer(WebsocketConsumer):
         players_list = event["players_list"]
         owner = event["owner"]
 
-        players_list_serializer = PlayerInListSerializer(players_list, many=True)
-        owner_serializer = PlayerInListSerializer(owner)
+        players_list_serializer = PlayerSerializer(players_list, many=True)
+        owner_serializer = PlayerSerializer(owner)
 
         data = {
             "owner": owner_serializer.data,

@@ -3,16 +3,10 @@ from rest_framework import serializers
 from game.models import Player, Village
 
 
-class PlayerInListSerializer(serializers.ModelSerializer):
+class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
         fields = ["id", "nickname"]
-
-
-class PlayerInGameSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Player
-        fields = ["id", "nickname", "resources", "town_hall", "granary", "iron_mine", "clay_pit", "sawmill", "barracks"]
 
 
 class CreateGameSessionSerializer(serializers.Serializer):
