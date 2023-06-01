@@ -27,7 +27,7 @@ class GameSession(BaseModel):
         super().save(*args, **kwargs)
 
     def generate_game_code(self):
-        self.game_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        self.game_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=self.GAME_CODE_LENGTH))
 
     def __str__(self):
         return self.game_code
