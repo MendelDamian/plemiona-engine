@@ -4,9 +4,8 @@ from datetime import timedelta
 
 from django.db import models
 
-from game import buildings
+from game import buildings, exceptions
 from utils.models import BaseModel
-from game import exceptions
 
 
 class GameSession(BaseModel):
