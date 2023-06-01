@@ -116,7 +116,7 @@ class Village(BaseModel):
         elif name == 'barracks':
             self.barracks_level += 1
         else:
-            raise exceptions.BuildingNameException
+            raise exceptions.BuildingNotFoundException
 
     def get_building(self, name):
         buildings_dict = {
@@ -130,6 +130,6 @@ class Village(BaseModel):
 
         building = buildings_dict.get(name, None)
         if not building:
-            raise exceptions.BuildingNameException
+            raise exceptions.BuildingNotFoundException
 
         return building

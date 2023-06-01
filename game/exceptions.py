@@ -36,12 +36,12 @@ class GameSessionFullException(APIException):
     default_detail = {'Game Session': ['Game session is full.']}
 
 
-class BuildingNameException(APIException):
-    status_code = 400
+class BuildingNotFoundException(APIException):
+    status_code = 404
     default_detail = {'Building': ['Building name is invalid.']}
 
 
-class ResourcesException(APIException):
+class InsufficientResourcesException(APIException):
     status_code = 400
     default_detail = {'Resources': ['You do not have enough resources.']}
 

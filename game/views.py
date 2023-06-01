@@ -48,7 +48,7 @@ class UpgradeBuildingView(APIView):
 
         for resource in upgrade_costs:
             if village_resources[resource] < upgrade_costs[resource]:
-                raise exceptions.ResourcesException
+                raise exceptions.InsufficientResourcesException
 
         for resource in upgrade_costs:
             village_resources[resource] -= upgrade_costs[resource]
