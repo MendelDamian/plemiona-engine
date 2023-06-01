@@ -64,12 +64,12 @@ class BarracksSerializer(BuildingSerializer):
 
 
 class VillageSerializer(serializers.ModelSerializer):
-    town_hall = BuildingSerializer()
-    warehouse = BuildingSerializer()
-    iron_mine = BuildingSerializer()
-    clay_pit = BuildingSerializer()
-    sawmill = BuildingSerializer()
-    barracks = BuildingSerializer()
+    town_hall = TownHallSerializer()
+    warehouse = WarehouseSerializer()
+    iron_mine = IronMineSerializer()
+    clay_pit = ClayPitSerializer()
+    sawmill = SawmillSerializer()
+    barracks = BarracksSerializer()
 
     class Meta:
         model = Village
