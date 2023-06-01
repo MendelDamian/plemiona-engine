@@ -22,9 +22,9 @@ class Building:
 
     def get_upgrade_cost(self) -> dict:
         return {
-            "wood": int(self.BASE_WOOD_COST * self.level * self.COST_MULTIPLIER),
-            "clay": int(self.BASE_CLAY_COST * self.level * self.COST_MULTIPLIER),
-            "iron": int(self.BASE_IRON_COST * self.level * self.COST_MULTIPLIER),
+            "wood": round(self.BASE_WOOD_COST * self.level * self.COST_MULTIPLIER),
+            "clay": round(self.BASE_CLAY_COST * self.level * self.COST_MULTIPLIER),
+            "iron": round(self.BASE_IRON_COST * self.level * self.COST_MULTIPLIER),
         }
 
     def get_upgrade_time(self) -> timedelta:
