@@ -103,6 +103,22 @@ class Village(BaseModel):
     def __str__(self):
         return f"Village {self.id}"
 
+    def upgrade_building_level(self, name):
+        if name == 'town_hall':
+            self.town_hall_level += 1
+        elif name == 'granary':
+            self.granary_level += 1
+        elif name == 'iron_mine':
+            self.iron_mine_level += 1
+        elif name == 'clay_pit':
+            self.clay_pit_level += 1
+        elif name == 'sawmill':
+            self.sawmill_level += 1
+        elif name == 'barracks':
+            self.barracks_level += 1
+        else:
+            raise exceptions.BuildingNameException
+
     def get_building(self, name):
         buildings_dict = {
             'town_hall': self.town_hall,
