@@ -34,3 +34,18 @@ class NotOwnerException(APIException):
 class GameSessionFullException(APIException):
     status_code = 400
     default_detail = {'Game Session': ['Game session is full.']}
+
+
+class BuildingNotFoundException(APIException):
+    status_code = 404
+    default_detail = {'Building': ['Building not found.']}
+
+
+class InsufficientResourcesException(APIException):
+    status_code = 400
+    default_detail = {'Resources': ['You do not have enough resources.']}
+
+
+class BuildingMaxLevelException(APIException):
+    status_code = 400
+    default_detail = {'Building level': ['This building has already reached maximum level']}

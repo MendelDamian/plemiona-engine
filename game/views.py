@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from game.serializers import CreateGameSessionSerializer
-from game.services import GameSessionService
+from game.services import GameSessionService, VillageService
 
 
 class CreateJoinGameSessionView(APIView):
@@ -35,4 +35,10 @@ class CreateJoinGameSessionView(APIView):
 class StartGameSessionView(APIView):
     def post(self, request, *args, **kwargs):
         GameSessionService.start_game_session(request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UpgradeBuildingView(APIView):
+    def post(self, request, building_name, *args, **kwargs):
+        VillageService.upgrade_building(request.user, building_name)
         return Response(status=status.HTTP_204_NO_CONTENT)
