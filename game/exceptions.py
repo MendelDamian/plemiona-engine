@@ -38,7 +38,7 @@ class GameSessionFullException(APIException):
 
 class BuildingNotFoundException(APIException):
     status_code = 404
-    default_detail = {'Building': ['Building name is invalid.']}
+    default_detail = {'Building': ['Building not found.']}
 
 
 class InsufficientResourcesException(APIException):
