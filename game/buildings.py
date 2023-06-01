@@ -8,8 +8,9 @@ class Building:
     MAX_LEVEL: ClassVar[int] = 1
     BASE_UPGRADE_TIME: ClassVar[timedelta] = timedelta(minutes=1)
 
-    # Multiplier
-    COST_MULTIPLIER: ClassVar[float] = 0
+    # Multipliers
+    COST_MULTIPLIER: ClassVar[float] = 1
+    TIME_MULTIPLIER: ClassVar[float] = 1
 
     # Upgrade costs
     BASE_WOOD_COST: ClassVar[int] = 0
@@ -21,13 +22,13 @@ class Building:
 
     def get_upgrade_cost(self) -> dict:
         return {
-            "wood": self.BASE_WOOD_COST * self.level,
-            "clay": self.BASE_CLAY_COST * self.level,
-            "iron": self.BASE_IRON_COST * self.level,
+            "wood": int(self.BASE_WOOD_COST * self.level * self.COST_MULTIPLIER),
+            "clay": int(self.BASE_CLAY_COST * self.level * self.COST_MULTIPLIER),
+            "iron": int(self.BASE_IRON_COST * self.level * self.COST_MULTIPLIER),
         }
 
     def get_upgrade_time(self) -> timedelta:
-        return self.BASE_UPGRADE_TIME * self.level
+        return self.BASE_UPGRADE_TIME * self.level * self.TIME_MULTIPLIER
 
     def upgrade(self) -> None:
         if self.level < self.MAX_LEVEL:
@@ -42,7 +43,11 @@ class Building:
 
 class TownHall(Building):
     MAX_LEVEL = 15
-    BASE_UPGRADE_TIME = timedelta(minutes=10)
+    BASE_UPGRADE_TIME = timedelta(seconds=30)
+
+    # Multipliers
+    COST_MULTIPLIER = 1.5
+    TIME_MULTIPLIER = 1.2
 
     # Costs
     BASE_WOOD_COST = 200
@@ -52,7 +57,11 @@ class TownHall(Building):
 
 class Granary(Building):
     MAX_LEVEL = 15
-    BASE_UPGRADE_TIME = timedelta(minutes=3)
+    BASE_UPGRADE_TIME = timedelta(seconds=30)
+
+    # Multipliers
+    COST_MULTIPLIER = 1.3
+    TIME_MULTIPLIER = 1.4
 
     # Costs
     BASE_WOOD_COST = 100
@@ -68,7 +77,11 @@ class Granary(Building):
 
 class IronMine(Building):
     MAX_LEVEL = 15
-    BASE_UPGRADE_TIME = timedelta(minutes=5)
+    BASE_UPGRADE_TIME = timedelta(seconds=30)
+
+    # Multipliers
+    COST_MULTIPLIER = 1.2
+    TIME_MULTIPLIER = 1.3
 
     # Costs
     BASE_WOOD_COST = 100
@@ -84,7 +97,11 @@ class IronMine(Building):
 
 class ClayPit(Building):
     MAX_LEVEL = 15
-    BASE_UPGRADE_TIME = timedelta(minutes=5)
+    BASE_UPGRADE_TIME = timedelta(seconds=30)
+
+    # Multipliers
+    COST_MULTIPLIER = 1.2
+    TIME_MULTIPLIER = 1.3
 
     # Costs
     BASE_WOOD_COST = 30
@@ -100,7 +117,11 @@ class ClayPit(Building):
 
 class Sawmill(Building):
     MAX_LEVEL = 15
-    BASE_UPGRADE_TIME = timedelta(minutes=5)
+    BASE_UPGRADE_TIME = timedelta(seconds=30)
+
+    # Multipliers
+    COST_MULTIPLIER = 1.2
+    TIME_MULTIPLIER = 1.3
 
     # Costs
     BASE_WOOD_COST = 30
@@ -116,7 +137,11 @@ class Sawmill(Building):
 
 class Barracks(Building):
     MAX_LEVEL = 3
-    BASE_UPGRADE_TIME = timedelta(minutes=5)
+    BASE_UPGRADE_TIME = timedelta(minutes=1)
+
+    # Multipliers
+    COST_MULTIPLIER = 5
+    TIME_MULTIPLIER = 5
 
     # Costs
     BASE_WOOD_COST = 200
