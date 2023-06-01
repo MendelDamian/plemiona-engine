@@ -45,7 +45,6 @@ class GameConsumer(WebsocketConsumer):
 
         if command_type == "fetch_resources":
             player.village.update_resources()
-            player.village.save()
             self.fetch_resources(player)
 
         elif command_type == "fetch_buildings":
