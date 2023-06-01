@@ -54,6 +54,7 @@ class UpgradeBuildingView(APIView):
             village_resources[resource] -= upgrade_costs[resource]
 
         building.upgrade()
+        village.upgrade_building_level(name)
         village.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
