@@ -52,3 +52,23 @@ class GameSessionService:
         game_session.has_started = True
         game_session.ended_at = timezone.now() + GameSession.DURATION
         game_session.save()
+
+
+class VillageService:
+    @staticmethod
+    def upgrade_building(player, building_name):
+        village = player.village
+        building = village.get_building(building_name)
+        upgrade_costs = building.get_upgrade_cost()
+        village_resources = village.resources
+
+        for resource in upgrade_costs:
+            if village_resources[resource] < upgrade_costs[resource]:
+                raise exceptions.InsufficientResourcesException
+
+        for resource in upgrade_costs:
+            village_resources[resource] -= upgrade_costs[resource]
+
+        building.upgrade()
+        village.upgrade_building_level(building_name)
+        village.save()
