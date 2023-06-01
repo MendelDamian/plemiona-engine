@@ -87,7 +87,7 @@ class Village(BaseModel):
 
     @property
     def warehouse(self):
-        return buildings.Granary(level=self.warehouse_level)
+        return buildings.Warehouse(level=self.warehouse_level)
 
     @property
     def iron_mine(self):

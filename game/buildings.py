@@ -55,7 +55,7 @@ class TownHall(Building):
     BASE_IRON_COST = 90
 
 
-class Granary(Building):
+class Warehouse(Building):
     MAX_LEVEL = 15
     BASE_UPGRADE_TIME = timedelta(seconds=30)
 
