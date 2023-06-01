@@ -75,7 +75,7 @@ class Village(BaseModel):
 
     # Level of the buildings
     town_hall_level = models.IntegerField(default=1, null=False)
-    granary_level = models.IntegerField(default=1, null=False)
+    warehouse_level = models.IntegerField(default=1, null=False)
     iron_mine_level = models.IntegerField(default=1, null=False)
     clay_pit_level = models.IntegerField(default=1, null=False)
     sawmill_level = models.IntegerField(default=1, null=False)
@@ -86,8 +86,8 @@ class Village(BaseModel):
         return buildings.TownHall(level=self.town_hall_level)
 
     @property
-    def granary(self):
-        return buildings.Granary(level=self.granary_level)
+    def warehouse(self):
+        return buildings.Granary(level=self.warehouse_level)
 
     @property
     def iron_mine(self):
@@ -117,10 +117,10 @@ class Village(BaseModel):
         self.iron += self.iron_mine.get_production(seconds_passed)
         self.clay += self.clay_pit.get_production(seconds_passed)
 
-        granary_capacity = self.granary.get_capacity()
-        self.wood = min(self.wood, granary_capacity)
-        self.iron = min(self.iron, granary_capacity)
-        self.clay = min(self.clay, granary_capacity)
+        warehouse_capacity = self.warehouse.get_capacity()
+        self.wood = min(self.wood, warehouse_capacity)
+        self.iron = min(self.iron, warehouse_capacity)
+        self.clay = min(self.clay, warehouse_capacity)
 
         self.last_resources_update = timezone.now()
         self.save()
@@ -131,8 +131,8 @@ class Village(BaseModel):
     def upgrade_building_level(self, name):
         if name == "town_hall":
             self.town_hall_level += 1
-        elif name == "granary":
-            self.granary_level += 1
+        elif name == "warehouse":
+            self.warehouse_level += 1
         elif name == "iron_mine":
             self.iron_mine_level += 1
         elif name == "clay_pit":
@@ -147,7 +147,7 @@ class Village(BaseModel):
     def get_building(self, name):
         buildings_dict = {
             "town_hall": self.town_hall,
-            "granary": self.granary,
+            "warehouse": self.warehouse,
             "iron_mine": self.iron_mine,
             "clay_pit": self.clay_pit,
             "sawmill": self.sawmill,

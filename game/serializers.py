@@ -31,7 +31,7 @@ class TownHallSerializer(BuildingSerializer):
     pass
 
 
-class GranarySerializer(BuildingSerializer):
+class WarehouseSerializer(BuildingSerializer):
     capacity = serializers.SerializerMethodField()
 
     def get_capacity(self, instance):
@@ -65,7 +65,7 @@ class BarracksSerializer(BuildingSerializer):
 
 class VillageSerializer(serializers.ModelSerializer):
     town_hall = BuildingSerializer()
-    granary = BuildingSerializer()
+    warehouse = BuildingSerializer()
     iron_mine = BuildingSerializer()
     clay_pit = BuildingSerializer()
     sawmill = BuildingSerializer()
@@ -76,7 +76,7 @@ class VillageSerializer(serializers.ModelSerializer):
         fields = (
             "morale",
             "town_hall",
-            "granary",
+            "warehouse",
             "iron_mine",
             "clay_pit",
             "sawmill",
