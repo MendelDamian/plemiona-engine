@@ -1,3 +1,5 @@
+import random
+
 from channels.layers import get_channel_layer
 from django.utils import timezone
 
@@ -89,3 +91,28 @@ class VillageService:
         building.upgrade()
         village.upgrade_building_level(building_name)
         village.save()
+
+
+class CoordinateService:
+    MAP_SIZE = 32
+    AVAILABLE_TILES = (
+        (0, 0),
+        (0, 1),
+        (0, 2),
+        (0, 3),
+        (0, 4),
+        (0, 5),
+        (0, 6),
+        (0, 7),
+        # TODO: Fill rest when map will be ready
+    )
+
+    @staticmethod
+    def set_coordinates(game_session):
+        left_coordinates = set(CoordinateService.AVAILABLE_TILES)
+
+        for player in game_session.player_set.all():
+            village = player.village
+            village.x, village.y = random.choice(tuple(left_coordinates))
+            left_coordinates.remove((village.x, village.y))
+            village.save()
