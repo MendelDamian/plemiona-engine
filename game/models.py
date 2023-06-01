@@ -63,15 +63,15 @@ class Village(BaseModel):
     morale = models.IntegerField(default=MAX_MORALE, null=False)
 
     # Resoources
-    wood = models.IntegerField(default=150, null=False)
-    iron = models.IntegerField(default=150, null=False)
-    clay = models.IntegerField(default=150, null=False)
+    wood = models.FloatField(default=150, null=False)
+    iron = models.FloatField(default=150, null=False)
+    clay = models.FloatField(default=150, null=False)
 
     last_resources_update = models.DateTimeField(null=True, default=None)
 
     @property
     def resources(self):
-        return {"wood": self.wood, "iron": self.iron, "clay": self.clay}
+        return {"wood": round(self.wood), "iron": round(self.iron), "clay": round(self.clay)}
 
     # Level of the buildings
     town_hall_level = models.IntegerField(default=1, null=False)
