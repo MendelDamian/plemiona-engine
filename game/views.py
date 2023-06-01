@@ -39,6 +39,6 @@ class StartGameSessionView(APIView):
 
 
 class UpgradeBuildingView(APIView):
-    def post(self, request, name, *args, **kwargs):
-        VillageService.upgrade_building(request.user, name)
+    def post(self, request, building_name, *args, **kwargs):
+        VillageService.upgrade_building(request.user, building_name)
         return Response(status=status.HTTP_204_NO_CONTENT)
