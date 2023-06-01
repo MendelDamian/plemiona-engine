@@ -37,7 +37,7 @@ class Player(BaseModel):
     NICKNAME_MIN_LENGTH = 3
     NICKNAME_MAX_LENGTH = 15
 
-    nickname = models.CharField(max_length=15, null=False)
+    nickname = models.CharField(max_length=NICKNAME_MAX_LENGTH, null=False)
     game_session = models.ForeignKey("GameSession", on_delete=models.CASCADE, null=False)
     village = models.OneToOneField("Village", on_delete=models.CASCADE, null=False)
 
@@ -58,7 +58,9 @@ class Player(BaseModel):
 
 
 class Village(BaseModel):
-    morale = models.IntegerField(default=100, null=False)
+    MAX_MORALE = 100
+
+    morale = models.IntegerField(default=MAX_MORALE, null=False)
 
     # Resoources
     wood = models.IntegerField(default=150, null=False)
@@ -127,29 +129,29 @@ class Village(BaseModel):
         return f"Village {self.id}"
 
     def upgrade_building_level(self, name):
-        if name == 'town_hall':
+        if name == "town_hall":
             self.town_hall_level += 1
-        elif name == 'granary':
+        elif name == "granary":
             self.granary_level += 1
-        elif name == 'iron_mine':
+        elif name == "iron_mine":
             self.iron_mine_level += 1
-        elif name == 'clay_pit':
+        elif name == "clay_pit":
             self.clay_pit_level += 1
-        elif name == 'sawmill':
+        elif name == "sawmill":
             self.sawmill_level += 1
-        elif name == 'barracks':
+        elif name == "barracks":
             self.barracks_level += 1
         else:
             raise exceptions.BuildingNotFoundException
 
     def get_building(self, name):
         buildings_dict = {
-            'town_hall': self.town_hall,
-            'granary': self.granary,
-            'iron_mine': self.iron_mine,
-            'clay_pit': self.clay_pit,
-            'sawmill': self.sawmill,
-            'barracks': self.barracks
+            "town_hall": self.town_hall,
+            "granary": self.granary,
+            "iron_mine": self.iron_mine,
+            "clay_pit": self.clay_pit,
+            "sawmill": self.sawmill,
+            "barracks": self.barracks,
         }
 
         building = buildings_dict.get(name, None)
