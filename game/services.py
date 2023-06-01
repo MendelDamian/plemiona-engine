@@ -70,6 +70,7 @@ class GameSessionService:
         village_queryset = Village.objects.filter(player__game_session=game_session)
         village_queryset.update(last_resources_update=timezone.now())
 
+        CoordinateService.set_coordinates(game_session)
         GameSessionConsumerService.send_start_game_session(game_session)
 
 
