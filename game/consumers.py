@@ -33,38 +33,23 @@ class GameConsumer(WebsocketConsumer):
         text_data_json = json.loads(text_data)
         command_type = text_data_json.get("type", None)
 
+        player = self.scope.get("player", None)
+        if not player:
+            self.close()
+            return
+
+        player.refresh_from_db()
+
+        if not player.game_session.has_started:
+            return
+
         if command_type == "fetch_resources":
-            player = self.scope.get("player", None)
-            if not player:
-                self.close()
-                return
-
-            if player.game_session.has_started:
-                player.village.update_resources()
-                player.village.save()
-                player.village.refresh_from_db()
-
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_group_name,
-                {
-                    "type": "fetch_resources",
-                    "player": player,
-                },
-            )
+            player.village.update_resources()
+            player.village.save()
+            self.fetch_resources(player)
 
         elif command_type == "fetch_buildings":
-            player = self.scope.get("player", None)
-            if not player:
-                self.close()
-                return
-
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_group_name,
-                {
-                    "type": "fetch_buildings",
-                    "player": player,
-                },
-            )
+            self.fetch_buildings(player)
 
     def players_list(self, event):
         players_list = event["players_list"]
@@ -87,25 +72,17 @@ class GameConsumer(WebsocketConsumer):
             )
         )
 
-    def fetch_resources(self, event):
-        player: Player = event["player"]
-        player.village.refresh_from_db()
-
-        data = {
-            "resources": player.village.resources,
-        }
-
+    def fetch_resources(self, player):
         self.send(
             text_data=json.dumps(
                 {
                     "type": "fetch_resources",
-                    "data": data,
+                    "data": player.village.resources,
                 }
             )
         )
 
-    def fetch_buildings(self, event):
-        player: Player = event["player"]
+    def fetch_buildings(self, player):
         player.village.refresh_from_db()
 
         village_serializer = VillageSerializer(player.village)
