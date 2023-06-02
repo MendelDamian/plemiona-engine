@@ -41,10 +41,6 @@ class Player(BaseModel):
     game_session = models.ForeignKey("GameSession", on_delete=models.CASCADE, null=False)
     village = models.OneToOneField("Village", on_delete=models.CASCADE, null=False)
 
-    # Coordinates
-    x = models.IntegerField(default=0, null=False)
-    y = models.IntegerField(default=0, null=False)
-
     is_authenticated = True
 
     class Meta:
@@ -65,6 +61,10 @@ class Village(BaseModel):
     MAX_MORALE = 100
 
     morale = models.IntegerField(default=MAX_MORALE, null=False)
+
+    # Coordinates
+    x = models.IntegerField(default=0, null=False)
+    y = models.IntegerField(default=0, null=False)
 
     # Resoources
     wood = models.FloatField(default=150, null=False)
