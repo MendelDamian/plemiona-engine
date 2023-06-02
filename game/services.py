@@ -82,10 +82,9 @@ class VillageService:
 
         building = village.get_building(building_name)
         upgrade_costs = building.get_upgrade_cost()
-        village_resources = village.resources
 
         for resource in upgrade_costs:
-            if village_resources[resource] < upgrade_costs[resource]:
+            if village.resources[resource] < upgrade_costs[resource]:
                 raise exceptions.InsufficientResourcesException
 
         village.wood -= upgrade_costs['wood']
