@@ -3,7 +3,7 @@ from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 
 from game.models import Player, GameSession
-from game.serializers import PlayerSerializer, VillageSerializer
+from game.serializers import PlayerSerializer, PlayerStartGameSessionConsumerSerializer, VillageSerializer
 
 
 class GameConsumer(WebsocketConsumer):
@@ -97,13 +97,17 @@ class GameConsumer(WebsocketConsumer):
     def start_game_session(self, event):
         game_session: GameSession = event["game_session"]
 
+        data = {
+            "end_time": game_session.ended_at.isoformat(),
+            "duration": int(game_session.DURATION.total_seconds()),
+            "players": PlayerStartGameSessionConsumerSerializer(game_session.player_set.all(), many=True).data,
+        }
+
         self.send(
             text_data=json.dumps(
                 {
                     "type": "start_game_session",
-                    "data": {
-                        "end_time": game_session.ended_at.isoformat(),
-                    },
+                    "data": data,
                 }
             )
         )
