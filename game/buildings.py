@@ -7,15 +7,16 @@ from game import exceptions
 class Building:
     MAX_LEVEL: ClassVar[int] = 1
     BASE_UPGRADE_TIME: ClassVar[timedelta] = timedelta(minutes=1)
+    POINTS_PER_LEVEL: ClassVar[int] = 1
 
     # Multipliers
     COST_MULTIPLIER: ClassVar[float] = 1
     TIME_MULTIPLIER: ClassVar[float] = 1
 
     # Upgrade costs
-    BASE_WOOD_COST: ClassVar[int] = 0
-    BASE_CLAY_COST: ClassVar[int] = 0
-    BASE_IRON_COST: ClassVar[int] = 0
+    BASE_WOOD_COST: ClassVar[int] = 1
+    BASE_CLAY_COST: ClassVar[int] = 1
+    BASE_IRON_COST: ClassVar[int] = 1
 
     def __init__(self, level: int = 1) -> None:
         self.level = level
@@ -29,6 +30,10 @@ class Building:
 
     def get_upgrade_time(self) -> timedelta:
         return self.BASE_UPGRADE_TIME * self.level * self.TIME_MULTIPLIER
+
+    @property
+    def points(self) -> int:
+        return self.level * self.POINTS_PER_LEVEL
 
     def upgrade(self) -> None:
         if self.level < self.MAX_LEVEL:
@@ -44,6 +49,7 @@ class Building:
 class TownHall(Building):
     MAX_LEVEL = 15
     BASE_UPGRADE_TIME = timedelta(seconds=30)
+    POINTS_PER_LEVEL = 30
 
     # Multipliers
     COST_MULTIPLIER = 1.5
@@ -58,6 +64,7 @@ class TownHall(Building):
 class Warehouse(Building):
     MAX_LEVEL = 15
     BASE_UPGRADE_TIME = timedelta(seconds=30)
+    POINTS_PER_LEVEL = 20
 
     # Multipliers
     COST_MULTIPLIER = 1.3
@@ -78,6 +85,7 @@ class Warehouse(Building):
 class IronMine(Building):
     MAX_LEVEL = 15
     BASE_UPGRADE_TIME = timedelta(seconds=30)
+    POINTS_PER_LEVEL = 15
 
     # Multipliers
     COST_MULTIPLIER = 1.2
@@ -98,6 +106,7 @@ class IronMine(Building):
 class ClayPit(Building):
     MAX_LEVEL = 15
     BASE_UPGRADE_TIME = timedelta(seconds=30)
+    POINTS_PER_LEVEL = 15
 
     # Multipliers
     COST_MULTIPLIER = 1.2
@@ -118,6 +127,7 @@ class ClayPit(Building):
 class Sawmill(Building):
     MAX_LEVEL = 15
     BASE_UPGRADE_TIME = timedelta(seconds=30)
+    POINTS_PER_LEVEL = 15
 
     # Multipliers
     COST_MULTIPLIER = 1.2
@@ -138,6 +148,7 @@ class Sawmill(Building):
 class Barracks(Building):
     MAX_LEVEL = 3
     BASE_UPGRADE_TIME = timedelta(minutes=1)
+    POINTS_PER_LEVEL = 55
 
     # Multipliers
     COST_MULTIPLIER = 5

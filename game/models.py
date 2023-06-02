@@ -30,7 +30,7 @@ class GameSession(BaseModel):
         self.game_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=self.GAME_CODE_LENGTH))
 
     def __str__(self):
-        return self.game_code
+        return str(self.game_code)
 
 
 class Player(BaseModel):
@@ -46,6 +46,10 @@ class Player(BaseModel):
     class Meta:
         unique_together = ("game_session", "nickname")
 
+    @property
+    def points(self):
+        return sum([building.points for _, building in self.village.buildings.items()])
+
     def save(self, *args, **kwargs):
         # Check if the player has a village, avoid RelatedObjectDoesNotExist
         if not hasattr(self, "village"):
@@ -54,7 +58,7 @@ class Player(BaseModel):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.nickname
+        return str(self.nickname)
 
 
 class Village(BaseModel):
@@ -105,6 +109,17 @@ class Village(BaseModel):
     def barracks(self):
         return buildings.Barracks(level=self.barracks_level)
 
+    @property
+    def buildings(self):
+        return {
+            "town_hall": self.town_hall,
+            "warehouse": self.warehouse,
+            "iron_mine": self.iron_mine,
+            "clay_pit": self.clay_pit,
+            "sawmill": self.sawmill,
+            "barracks": self.barracks,
+        }
+
     def update_resources(self):
         if not self.last_resources_update:
             self.last_resources_update = timezone.now()
@@ -125,9 +140,6 @@ class Village(BaseModel):
         self.last_resources_update = timezone.now()
         self.save()
 
-    def __str__(self):
-        return f"Village {self.id}"
-
     def upgrade_building_level(self, name):
         if name == "town_hall":
             self.town_hall_level += 1
@@ -145,17 +157,11 @@ class Village(BaseModel):
             raise exceptions.BuildingNotFoundException
 
     def get_building(self, name):
-        buildings_dict = {
-            "town_hall": self.town_hall,
-            "warehouse": self.warehouse,
-            "iron_mine": self.iron_mine,
-            "clay_pit": self.clay_pit,
-            "sawmill": self.sawmill,
-            "barracks": self.barracks,
-        }
-
-        building = buildings_dict.get(name, None)
+        building = self.buildings.get(name, None)
         if not building:
             raise exceptions.BuildingNotFoundException
 
         return building
+
+    def __str__(self):
+        return f"Village {self.id}"
