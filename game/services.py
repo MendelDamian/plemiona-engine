@@ -78,6 +78,8 @@ class VillageService:
     @staticmethod
     def upgrade_building(player, building_name):
         village = player.village
+        village.update_resources()
+
         building = village.get_building(building_name)
         upgrade_costs = building.get_upgrade_cost()
         village_resources = village.resources
@@ -86,8 +88,9 @@ class VillageService:
             if village_resources[resource] < upgrade_costs[resource]:
                 raise exceptions.InsufficientResourcesException
 
-        for resource in upgrade_costs:
-            village_resources[resource] -= upgrade_costs[resource]
+        village.wood -= upgrade_costs['wood']
+        village.clay -= upgrade_costs['clay']
+        village.iron -= upgrade_costs['iron']
 
         building.upgrade()
         village.upgrade_building_level(building_name)
