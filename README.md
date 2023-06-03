@@ -6,8 +6,12 @@
 git clone git@github.com:MendelDamian/plemiona-engine.git
 cd plemiona-engine
 
+# Install Redis server
+sudo apt-get install redis-server
+
 # Create venv
 python3 -m venv venv
+
 # Activate venv
 source venv/bin/activate
 
@@ -16,6 +20,9 @@ pip install -r requirements.txt
 
 # Migrate
 python manage.py migrate
+
+# Start Redis server
+sudo service redis-server start
 
 # Run development server
 python manage.py runserver
