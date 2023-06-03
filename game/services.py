@@ -1,20 +1,42 @@
 import random
 
-from channels.layers import get_channel_layer
 from django.utils import timezone
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 from game import exceptions
-from game.models import GameSession, Player, Village
 from game.consumers import GameConsumer
+from game.models import GameSession, Player, Village
 
 
 class GameSessionConsumerService:
     @staticmethod
     def send_start_game_session(game_session):
         game_consumer = GameConsumer()
-        game_consumer.room_group_name = game_session.game_code
+        game_consumer.room_group_name = str(game_session.game_code)
         game_consumer.channel_layer = get_channel_layer()
-        game_consumer.send_start_game_session(game_session)
+
+        async_to_sync(game_consumer.channel_layer.group_send)(
+            game_consumer.room_group_name,
+            {
+                "type": "start_game_session",
+                "game_session": game_session,
+            },
+        )
+
+    @staticmethod
+    def send_fetch_resources(player):
+        game_consumer = GameConsumer()
+        game_consumer.player = player
+        game_consumer.player_group_name = str(player.channel_name)
+        game_consumer.channel_layer = get_channel_layer()
+
+        async_to_sync(game_consumer.channel_layer.group_send)(
+            game_consumer.player_group_name,
+            {
+                "type": "fetch_resources",
+            },
+        )
 
 
 class GameSessionService:
@@ -77,6 +99,9 @@ class GameSessionService:
 class VillageService:
     @staticmethod
     def upgrade_building(player, building_name):
+        if not player.game_session.has_started:
+            raise exceptions.GameSessionNotStartedException
+
         village = player.village
         village.update_resources()
 
@@ -87,13 +112,15 @@ class VillageService:
             if village.resources[resource] < upgrade_costs[resource]:
                 raise exceptions.InsufficientResourcesException
 
-        village.wood -= upgrade_costs['wood']
-        village.clay -= upgrade_costs['clay']
-        village.iron -= upgrade_costs['iron']
+        village.wood -= upgrade_costs["wood"]
+        village.clay -= upgrade_costs["clay"]
+        village.iron -= upgrade_costs["iron"]
 
         building.upgrade()
         village.upgrade_building_level(building_name)
         village.save()
+
+        GameSessionConsumerService.send_fetch_resources(player)
 
 
 class CoordinateService:
