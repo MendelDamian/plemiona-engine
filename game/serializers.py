@@ -9,6 +9,20 @@ class PlayerSerializer(serializers.ModelSerializer):
         fields = ["id", "nickname"]
 
 
+class VillageCoordinatesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Village
+        fields = ["x", "y"]
+
+
+class PlayerStartGameSessionConsumerSerializer(serializers.ModelSerializer):
+    village = VillageCoordinatesSerializer()
+
+    class Meta:
+        model = Player
+        fields = ["id", "nickname", "village"]
+
+
 class CreateGameSessionSerializer(serializers.Serializer):
     nickname = serializers.CharField(
         max_length=Player.NICKNAME_MAX_LENGTH, min_length=Player.NICKNAME_MIN_LENGTH, required=True

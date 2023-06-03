@@ -1,3 +1,4 @@
+import uuid
 import random
 import string
 from datetime import timedelta
@@ -38,6 +39,9 @@ class Player(BaseModel):
     NICKNAME_MAX_LENGTH = 15
 
     nickname = models.CharField(max_length=NICKNAME_MAX_LENGTH, null=False)
+    channel_name = models.UUIDField(default=uuid.uuid4, editable=False, null=False)
+    is_connected = models.BooleanField(default=False, null=False)
+
     game_session = models.ForeignKey("GameSession", on_delete=models.CASCADE, null=False)
     village = models.OneToOneField("Village", on_delete=models.CASCADE, null=False)
 
@@ -65,6 +69,10 @@ class Village(BaseModel):
     MAX_MORALE = 100
 
     morale = models.IntegerField(default=MAX_MORALE, null=False)
+
+    # Coordinates
+    x = models.IntegerField(default=0, null=False)
+    y = models.IntegerField(default=0, null=False)
 
     # Resoources
     wood = models.FloatField(default=150, null=False)

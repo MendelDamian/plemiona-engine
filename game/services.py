@@ -1,18 +1,56 @@
-from channels.layers import get_channel_layer
+import random
+
 from django.utils import timezone
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 from game import exceptions
-from game.models import GameSession, Player, Village
 from game.consumers import GameConsumer
+from game.models import GameSession, Player, Village
 
 
 class GameSessionConsumerService:
     @staticmethod
     def send_start_game_session(game_session):
         game_consumer = GameConsumer()
-        game_consumer.room_group_name = game_session.game_code
+        game_consumer.game_session = game_session
+        game_consumer.room_group_name = str(game_session.game_code)
         game_consumer.channel_layer = get_channel_layer()
-        game_consumer.send_start_game_session(game_session)
+
+        async_to_sync(game_consumer.channel_layer.group_send)(
+            game_consumer.room_group_name,
+            {
+                "type": "start_game_session",
+            },
+        )
+
+    @staticmethod
+    def send_fetch_resources(player):
+        game_consumer = GameConsumer()
+        game_consumer.player = player
+        game_consumer.player_group_name = str(player.channel_name)
+        game_consumer.channel_layer = get_channel_layer()
+
+        async_to_sync(game_consumer.channel_layer.group_send)(
+            game_consumer.player_group_name,
+            {
+                "type": "fetch_resources",
+            },
+        )
+
+    @staticmethod
+    def send_fetch_buildings(player):
+        game_consumer = GameConsumer()
+        game_consumer.player = player
+        game_consumer.player_group_name = str(player.channel_name)
+        game_consumer.channel_layer = get_channel_layer()
+
+        async_to_sync(game_consumer.channel_layer.group_send)(
+            game_consumer.player_group_name,
+            {
+                "type": "fetch_buildings",
+            },
+        )
 
 
 class GameSessionService:
@@ -68,24 +106,61 @@ class GameSessionService:
         village_queryset = Village.objects.filter(player__game_session=game_session)
         village_queryset.update(last_resources_update=timezone.now())
 
+        CoordinateService.set_coordinates(game_session)
         GameSessionConsumerService.send_start_game_session(game_session)
+        for player in game_session.player_set.all():
+            GameSessionConsumerService.send_fetch_resources(player)
+            GameSessionConsumerService.send_fetch_buildings(player)
 
 
 class VillageService:
     @staticmethod
     def upgrade_building(player, building_name):
+        if not player.game_session.has_started:
+            raise exceptions.GameSessionNotStartedException
+
         village = player.village
+        village.update_resources()
+
         building = village.get_building(building_name)
         upgrade_costs = building.get_upgrade_cost()
-        village_resources = village.resources
 
         for resource in upgrade_costs:
-            if village_resources[resource] < upgrade_costs[resource]:
+            if village.resources[resource] < upgrade_costs[resource]:
                 raise exceptions.InsufficientResourcesException
 
-        for resource in upgrade_costs:
-            village_resources[resource] -= upgrade_costs[resource]
+        village.wood -= upgrade_costs["wood"]
+        village.clay -= upgrade_costs["clay"]
+        village.iron -= upgrade_costs["iron"]
 
         building.upgrade()
         village.upgrade_building_level(building_name)
         village.save()
+
+        GameSessionConsumerService.send_fetch_resources(player)
+        GameSessionConsumerService.send_fetch_buildings(player)
+
+
+class CoordinateService:
+    MAP_SIZE = 32
+    AVAILABLE_TILES = (
+        (0, 0),
+        (0, 1),
+        (0, 2),
+        (0, 3),
+        (0, 4),
+        (0, 5),
+        (0, 6),
+        (0, 7),
+        # TODO: Fill rest when map will be ready
+    )
+
+    @staticmethod
+    def set_coordinates(game_session):
+        left_coordinates = set(CoordinateService.AVAILABLE_TILES)
+
+        for player in game_session.player_set.all():
+            village = player.village
+            village.x, village.y = random.choice(tuple(left_coordinates))
+            left_coordinates.remove((village.x, village.y))
+            village.save()
