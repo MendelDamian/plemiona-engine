@@ -6,3 +6,4 @@ django-cors-headers
 django-extensions
 daphne
 channels
+celery
