@@ -24,6 +24,9 @@ python manage.py migrate
 # Start Redis server
 sudo service redis-server start
 
+# Start Celery worker process
+celery -A plemiona_api worker -l info
+
 # Run development server
 python manage.py runserver
 ```
