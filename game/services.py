@@ -137,7 +137,6 @@ class VillageService:
         village.upgrade_building_level(building_name)
         village.save()
 
-        player.refresh_from_db()
         GameSessionConsumerService.send_fetch_resources(player)
         GameSessionConsumerService.send_fetch_buildings(player)
 

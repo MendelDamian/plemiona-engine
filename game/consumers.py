@@ -73,6 +73,7 @@ class GameConsumer(WebsocketConsumer):
             self.fetch_buildings(self.player)
 
     def players_list(self, event):
+        self.game_session.refresh_from_db()
         players_list = event["players_list"]
         owner = event["owner"]
 
@@ -94,6 +95,7 @@ class GameConsumer(WebsocketConsumer):
         )
 
     def fetch_resources(self, event):
+        self.player.refresh_from_db()
         self.send(
             text_data=json.dumps(
                 {
@@ -104,6 +106,7 @@ class GameConsumer(WebsocketConsumer):
         )
 
     def fetch_buildings(self, event):
+        self.player.refresh_from_db()
         self.send(
             text_data=json.dumps(
                 {
