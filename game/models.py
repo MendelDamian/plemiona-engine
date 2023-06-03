@@ -40,6 +40,7 @@ class Player(BaseModel):
 
     nickname = models.CharField(max_length=NICKNAME_MAX_LENGTH, null=False)
     channel_name = models.UUIDField(default=uuid.uuid4, editable=False, null=False)
+    is_connected = models.BooleanField(default=False, null=False)
 
     game_session = models.ForeignKey("GameSession", on_delete=models.CASCADE, null=False)
     village = models.OneToOneField("Village", on_delete=models.CASCADE, null=False)
