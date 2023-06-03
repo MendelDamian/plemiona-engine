@@ -13,6 +13,7 @@ class GameSessionConsumerService:
     @staticmethod
     def send_start_game_session(game_session):
         game_consumer = GameConsumer()
+        game_consumer.game_session = game_session
         game_consumer.room_group_name = str(game_session.game_code)
         game_consumer.channel_layer = get_channel_layer()
 
@@ -20,7 +21,6 @@ class GameSessionConsumerService:
             game_consumer.room_group_name,
             {
                 "type": "start_game_session",
-                "game_session": game_session,
             },
         )
 
@@ -35,6 +35,20 @@ class GameSessionConsumerService:
             game_consumer.player_group_name,
             {
                 "type": "fetch_resources",
+            },
+        )
+
+    @staticmethod
+    def send_fetch_buildings(player):
+        game_consumer = GameConsumer()
+        game_consumer.player = player
+        game_consumer.player_group_name = str(player.channel_name)
+        game_consumer.channel_layer = get_channel_layer()
+
+        async_to_sync(game_consumer.channel_layer.group_send)(
+            game_consumer.player_group_name,
+            {
+                "type": "fetch_buildings",
             },
         )
 
@@ -94,6 +108,9 @@ class GameSessionService:
 
         CoordinateService.set_coordinates(game_session)
         GameSessionConsumerService.send_start_game_session(game_session)
+        for player in game_session.player_set.all():
+            GameSessionConsumerService.send_fetch_resources(player)
+            GameSessionConsumerService.send_fetch_buildings(player)
 
 
 class VillageService:
@@ -120,7 +137,9 @@ class VillageService:
         village.upgrade_building_level(building_name)
         village.save()
 
+        player.refresh_from_db()
         GameSessionConsumerService.send_fetch_resources(player)
+        GameSessionConsumerService.send_fetch_buildings(player)
 
 
 class CoordinateService:
