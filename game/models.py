@@ -1,3 +1,4 @@
+import uuid
 import random
 import string
 from datetime import timedelta
@@ -38,6 +39,8 @@ class Player(BaseModel):
     NICKNAME_MAX_LENGTH = 15
 
     nickname = models.CharField(max_length=NICKNAME_MAX_LENGTH, null=False)
+    channel_name = models.UUIDField(default=uuid.uuid4, editable=False, null=False)
+
     game_session = models.ForeignKey("GameSession", on_delete=models.CASCADE, null=False)
     village = models.OneToOneField("Village", on_delete=models.CASCADE, null=False)
 
