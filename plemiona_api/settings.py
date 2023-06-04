@@ -45,8 +45,11 @@ ASGI_APPLICATION = "plemiona_api.asgi.application"
 
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
 }
 
 MIDDLEWARE = [
@@ -152,12 +155,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": int(os.getenv("DJANGO_PAGINATION_LIMIT", 10)),
     "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%S%z",
-    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
+    "DEFAULT_RENDERER_CLASSES": ("djangorestframework_camel_case.render.CamelCaseJSONRenderer",),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_PARSER_CLASSES": ("djangorestframework_camel_case.parser.CamelCaseJSONParser",),
     "DEFAULT_AUTHENTICATION_CLASSES": ("utils.jwt_authentication.JWTAuthentication",),
-    'EXCEPTION_HANDLER': 'utils.exception_handler.custom_exception_handler',
+    "EXCEPTION_HANDLER": "utils.exception_handler.custom_exception_handler",
 }
 
 SIMPLE_JWT = {
