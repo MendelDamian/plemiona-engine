@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import random
 
 from django.utils import timezone
@@ -7,6 +8,8 @@ from channels.layers import get_channel_layer
 from game import exceptions
 from game.consumers import GameConsumer
 from game.models import GameSession, Player, Village
+from game import tasks
+from .serializers import PlayerTaskSerializer
 
 
 class GameSessionConsumerService:
@@ -137,8 +140,10 @@ class VillageService:
         village.upgrade_building_level(building_name)
         village.save()
 
-        GameSessionConsumerService.send_fetch_resources(player)
-        GameSessionConsumerService.send_fetch_buildings(player)
+        player_id = PlayerTaskSerializer(player).data
+        tasks.task.delay(player_id, 7)
+        # GameSessionConsumerService.send_fetch_resources(player)
+        # GameSessionConsumerService.send_fetch_buildings(player)
 
 
 class CoordinateService:
