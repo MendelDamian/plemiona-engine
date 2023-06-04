@@ -1,21 +1,19 @@
-import json
+from typing import Optional
 
-from asgiref.sync import async_to_sync
-from channels.generic.websocket import WebsocketConsumer
+from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-from game.serializers import PlayerSerializer, PlayerStartGameSessionConsumerSerializer, VillageSerializer
+from game import models, serializers
 
 
-class GameConsumer(WebsocketConsumer):
+class GameSessionConsumer(AsyncJsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.player = None
-        self.game_session = None
-        self.room_name = None
-        self.room_group_name = None
-        self.player_group_name = None
+        super().__init__(args, kwargs)
+        self.room_group_name: Optional[str] = None
+        self.player: Optional[models.Player] = None
+        self.player_channel_name: Optional[str] = None
 
-    def connect(self):
+    async def connect(self):
         self.player = self.scope.get("player", None)
         if not self.player:
             return
@@ -23,112 +21,85 @@ class GameConsumer(WebsocketConsumer):
         first_connection = not self.player.is_connected
         if not self.player.is_connected:
             self.player.is_connected = True
-            self.player.save()
+            await self.player.asave()
 
-        self.game_session = self.player.game_session
+        self.room_group_name = await self.get_room_group_name()
+        self.player_channel_name = str(self.player.channel_name)
 
-        self.room_group_name = str(self.player.game_session.game_code)
-        self.player_group_name = str(self.player.channel_name)
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.channel_layer.group_add(self.player_channel_name, self.channel_name)
+        await self.accept()
 
-        async_to_sync(self.channel_layer.group_add)(self.room_group_name, self.channel_name)
-        async_to_sync(self.channel_layer.group_add)(self.player_group_name, self.channel_name)
-        self.accept()
+        players = await self.get_game_session_players()
+        owner = await self.get_owner()
+
+        data = {
+            "type": "players_list",
+            "data": {
+                "owner": owner,
+                "players": players,
+            },
+        }
 
         if first_connection:
-            players_list = self.player.game_session.player_set.all()
-            async_to_sync(self.channel_layer.group_send)(
+            await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    "type": "players_list",
-                    "players_list": PlayerSerializer(players_list, many=True).data,
-                    "owner": PlayerSerializer(self.player.game_session.owner).data,
+                    "type": "send_message",
+                    "data": data,
                 },
             )
         else:
-            self.players_list(
-                {
-                    "players_list": [PlayerSerializer(self.player).data],
-                    "owner": PlayerSerializer(self.player.game_session.owner).data,
-                }
-            )
+            await self.send_message(data)
 
-    def disconnect(self, close_code):
-        async_to_sync(self.channel_layer.group_discard)(self.room_group_name, self.channel_name)
-        async_to_sync(self.channel_layer.group_discard)(self.player_group_name, self.channel_name)
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        await self.channel_layer.group_discard(self.player_channel_name, self.channel_name)
 
-    def receive(self, text_data=None, bytes_data=None):
-        text_data_json = json.loads(text_data)
-        command_type = text_data_json.get("type", None)
+    async def receive_json(self, content, **kwargs):
+        command_type = content.get("type", None)
 
-        self.player.refresh_from_db()
-
-        if not self.player.game_session.has_started:
+        if not self.player:
             return
 
+        await self.player.arefresh_from_db()
+
         if command_type == "fetch_resources":
-            self.player.village.update_resources()
-            self.fetch_resources(self.player)
-
-        elif command_type == "fetch_buildings":
-            self.fetch_buildings(self.player)
-
-    def players_list(self, event):
-        self.game_session.refresh_from_db()
-        players_list = event["players_list"]
-        owner = event["owner"]
-
-        players_list_serializer = PlayerSerializer(players_list, many=True)
-        owner_serializer = PlayerSerializer(owner)
-
-        data = {
-            "owner": owner_serializer.data,
-            "players": players_list_serializer.data,
-        }
-
-        self.send(
-            text_data=json.dumps(
-                {
-                    "type": "players_list",
-                    "data": data,
-                }
-            )
-        )
-
-    def fetch_resources(self, event):
-        self.player.refresh_from_db()
-        self.send(
-            text_data=json.dumps(
+            await self.send_message(
                 {
                     "type": "fetch_resources",
-                    "data": self.player.village.resources,
+                    "data": await self.update_resources(),
                 }
             )
-        )
 
-    def fetch_buildings(self, event):
-        self.player.refresh_from_db()
-        self.send(
-            text_data=json.dumps(
+        if command_type == "fetch_buildings":
+            await self.send_message(
                 {
                     "type": "fetch_buildings",
-                    "data": VillageSerializer(self.player.village).data,
+                    "data": await self.get_village(),
                 }
             )
-        )
 
-    def start_game_session(self, event):
-        self.game_session.refresh_from_db()
-        data = {
-            "end_time": self.game_session.ended_at.isoformat(),
-            "duration": int(self.game_session.DURATION.total_seconds()),
-            "players": PlayerStartGameSessionConsumerSerializer(self.game_session.player_set.all(), many=True).data,
-        }
+    async def send_message(self, event):
+        await self.send_json(event["data"])
 
-        self.send(
-            text_data=json.dumps(
-                {
-                    "type": "start_game_session",
-                    "data": data,
-                }
-            )
-        )
+    @database_sync_to_async
+    def get_room_group_name(self):
+        return str(self.player.game_session.game_code)
+
+    @database_sync_to_async
+    def get_game_session_players(self):
+        return serializers.PlayerInLobbySerializer(self.player.game_session.player_set.all(), many=True).data
+
+    @database_sync_to_async
+    def get_owner(self):
+        return serializers.PlayerInLobbySerializer(self.player.game_session.owner).data
+
+    @database_sync_to_async
+    def update_resources(self):
+        self.player.village.update_resources()
+        return serializers.ResourcesSerializer(self.player.village).data
+
+    @database_sync_to_async
+    def get_village(self):
+        return serializers.VillageSerializer(self.player.village).data
