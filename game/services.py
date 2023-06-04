@@ -4,51 +4,44 @@ from django.utils import timezone
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from game import exceptions
-from game.consumers import GameConsumer
-from game.models import GameSession, Player, Village
+from game import exceptions, serializers, models
 
 
 class GameSessionConsumerService:
     @staticmethod
-    def send_start_game_session(game_session):
-        game_consumer = GameConsumer()
-        game_consumer.game_session = game_session
-        game_consumer.room_group_name = str(game_session.game_code)
-        game_consumer.channel_layer = get_channel_layer()
-
-        async_to_sync(game_consumer.channel_layer.group_send)(
-            game_consumer.room_group_name,
-            {
-                "type": "start_game_session",
+    def send_start_game_session(game_session: models.GameSession):
+        data = {
+            "type": "start_game_session",
+            "data": {
+                "players": serializers.PlayerDataSerializer(game_session.player_set.all(), many=True).data,
             },
-        )
+        }
+        GameSessionConsumerService._send_message(game_session.game_code, data)
 
     @staticmethod
-    def send_fetch_resources(player):
-        game_consumer = GameConsumer()
-        game_consumer.player = player
-        game_consumer.player_group_name = str(player.channel_name)
-        game_consumer.channel_layer = get_channel_layer()
-
-        async_to_sync(game_consumer.channel_layer.group_send)(
-            game_consumer.player_group_name,
-            {
-                "type": "fetch_resources",
-            },
-        )
+    def send_fetch_resources(player: models.Player):
+        data = {
+            "type": "fetch_resources",
+            "data": serializers.ResourcesSerializer(player.village).data,
+        }
+        GameSessionConsumerService._send_message(player.channel_name, data)
 
     @staticmethod
-    def send_fetch_buildings(player):
-        game_consumer = GameConsumer()
-        game_consumer.player = player
-        game_consumer.player_group_name = str(player.channel_name)
-        game_consumer.channel_layer = get_channel_layer()
+    def send_fetch_buildings(player: models.Player):
+        data = {
+            "type": "fetch_buildings",
+            "data": serializers.VillageSerializer(player.village).data,
+        }
+        GameSessionConsumerService._send_message(player.channel_name, data)
 
-        async_to_sync(game_consumer.channel_layer.group_send)(
-            game_consumer.player_group_name,
+    @staticmethod
+    def _send_message(channel_name, data):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            str(channel_name),
             {
-                "type": "fetch_buildings",
+                "type": "send_message",
+                "data": data,
             },
         )
 
@@ -58,26 +51,26 @@ class GameSessionService:
     def get_or_create_game_session(game_code=None):
         if game_code:
             try:
-                game_session = GameSession.objects.get(game_code=game_code)
-            except GameSession.DoesNotExist:
+                game_session = models.GameSession.objects.get(game_code=game_code)
+            except models.GameSession.DoesNotExist:
                 raise exceptions.GameSessionNotFoundException
 
             if game_session.has_started:
                 raise exceptions.GameSessionAlreadyStartedException
 
-            if game_session.player_set.count() >= GameSession.MAXIMUM_PLAYERS:
+            if game_session.player_set.count() >= models.GameSession.MAXIMUM_PLAYERS:
                 raise exceptions.GameSessionFullException
         else:
-            game_session = GameSession.objects.create(owner=None)
+            game_session = models.GameSession.objects.create(owner=None)
 
         return game_session
 
     @staticmethod
     def join_game_session(game_session, nickname):
-        if Player.objects.filter(game_session=game_session, nickname=nickname).exists():
+        if models.Player.objects.filter(game_session=game_session, nickname=nickname).exists():
             raise exceptions.NicknameAlreadyInUseException
 
-        player = Player.objects.create(game_session=game_session, nickname=nickname)
+        player = models.Player.objects.create(game_session=game_session, nickname=nickname)
         if not game_session.owner:
             game_session.owner = player
             game_session.save()
@@ -95,15 +88,15 @@ class GameSessionService:
         if game_session.has_started:
             raise exceptions.GameSessionAlreadyStartedException
 
-        if game_session.player_set.count() < GameSession.MINIMUM_PLAYERS:
+        if game_session.player_set.count() < models.GameSession.MINIMUM_PLAYERS:
             raise exceptions.MinimumPlayersNotReachedException
 
         game_session.has_started = True
-        game_session.ended_at = timezone.now() + GameSession.DURATION
+        game_session.ended_at = timezone.now() + models.GameSession.DURATION
         game_session.save()
 
         # Start gathering resources for all players
-        village_queryset = Village.objects.filter(player__game_session=game_session)
+        village_queryset = models.Village.objects.filter(player__game_session=game_session)
         village_queryset.update(last_resources_update=timezone.now())
 
         CoordinateService.set_coordinates(game_session)
@@ -142,7 +135,6 @@ class VillageService:
 
 
 class CoordinateService:
-    MAP_SIZE = 32
     AVAILABLE_TILES = (
         (0, 0),
         (0, 1),
