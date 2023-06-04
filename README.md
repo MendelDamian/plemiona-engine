@@ -2,7 +2,7 @@
 
 ## Setting Up Development Environment
 
-Get redis:
+Get redis: (https://redis.io/topics/quickstart)
 ```bash
 sudo apt install redis-server
 ```
