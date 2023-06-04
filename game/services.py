@@ -4,13 +4,12 @@ from django.utils import timezone
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from game import exceptions, serializers
-from game.models import GameSession, Player, Village
+from game import exceptions, serializers, models
 
 
 class GameSessionConsumerService:
     @staticmethod
-    def send_start_game_session(game_session: GameSession):
+    def send_start_game_session(game_session: models.GameSession):
         data = {
             "type": "start_game_session",
             "data": {
@@ -20,7 +19,7 @@ class GameSessionConsumerService:
         GameSessionConsumerService._send_message(game_session.game_code, data)
 
     @staticmethod
-    def send_fetch_resources(player: Player):
+    def send_fetch_resources(player: models.Player):
         data = {
             "type": "fetch_resources",
             "data": serializers.ResourcesSerializer(player.village).data,
@@ -28,7 +27,7 @@ class GameSessionConsumerService:
         GameSessionConsumerService._send_message(player.channel_name, data)
 
     @staticmethod
-    def send_fetch_buildings(player: Player):
+    def send_fetch_buildings(player: models.Player):
         data = {
             "type": "fetch_buildings",
             "data": serializers.VillageSerializer(player.village).data,
@@ -52,26 +51,26 @@ class GameSessionService:
     def get_or_create_game_session(game_code=None):
         if game_code:
             try:
-                game_session = GameSession.objects.get(game_code=game_code)
-            except GameSession.DoesNotExist:
+                game_session = models.GameSession.objects.get(game_code=game_code)
+            except models.GameSession.DoesNotExist:
                 raise exceptions.GameSessionNotFoundException
 
             if game_session.has_started:
                 raise exceptions.GameSessionAlreadyStartedException
 
-            if game_session.player_set.count() >= GameSession.MAXIMUM_PLAYERS:
+            if game_session.player_set.count() >= models.GameSession.MAXIMUM_PLAYERS:
                 raise exceptions.GameSessionFullException
         else:
-            game_session = GameSession.objects.create(owner=None)
+            game_session = models.GameSession.objects.create(owner=None)
 
         return game_session
 
     @staticmethod
     def join_game_session(game_session, nickname):
-        if Player.objects.filter(game_session=game_session, nickname=nickname).exists():
+        if models.Player.objects.filter(game_session=game_session, nickname=nickname).exists():
             raise exceptions.NicknameAlreadyInUseException
 
-        player = Player.objects.create(game_session=game_session, nickname=nickname)
+        player = models.Player.objects.create(game_session=game_session, nickname=nickname)
         if not game_session.owner:
             game_session.owner = player
             game_session.save()
@@ -89,15 +88,15 @@ class GameSessionService:
         if game_session.has_started:
             raise exceptions.GameSessionAlreadyStartedException
 
-        if game_session.player_set.count() < GameSession.MINIMUM_PLAYERS:
+        if game_session.player_set.count() < models.GameSession.MINIMUM_PLAYERS:
             raise exceptions.MinimumPlayersNotReachedException
 
         game_session.has_started = True
-        game_session.ended_at = timezone.now() + GameSession.DURATION
+        game_session.ended_at = timezone.now() + models.GameSession.DURATION
         game_session.save()
 
         # Start gathering resources for all players
-        village_queryset = Village.objects.filter(player__game_session=game_session)
+        village_queryset = models.Village.objects.filter(player__game_session=game_session)
         village_queryset.update(last_resources_update=timezone.now())
 
         CoordinateService.set_coordinates(game_session)
