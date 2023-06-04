@@ -96,11 +96,3 @@ class VillageSerializer(serializers.ModelSerializer):
             "sawmill",
             "barracks",
         )
-
-
-class PlayerTaskSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Player
-        fields = [
-            "id"
-        ]
