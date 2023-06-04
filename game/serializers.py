@@ -1,26 +1,7 @@
 from rest_framework import serializers
 
+from game.buildings import Building
 from game.models import Player, Village, GameSession
-
-
-class PlayerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Player
-        fields = ["id", "nickname"]
-
-
-class VillageCoordinatesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Village
-        fields = ["x", "y"]
-
-
-class PlayerStartGameSessionConsumerSerializer(serializers.ModelSerializer):
-    village = VillageCoordinatesSerializer()
-
-    class Meta:
-        model = Player
-        fields = ["id", "nickname", "village"]
 
 
 class CreateGameSessionSerializer(serializers.Serializer):
@@ -30,69 +11,75 @@ class CreateGameSessionSerializer(serializers.Serializer):
     game_code = serializers.CharField(max_length=GameSession.GAME_CODE_LENGTH, required=False, allow_blank=True)
 
 
-class BuildingSerializer(serializers.Serializer):
+class PlayerInLobbySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Player
+        fields = ("id", "nickname")
+
+
+class VillageCoordinatesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Village
+        fields = ("x", "y")
+
+
+class PlayerDataSerializer(serializers.ModelSerializer):
+    village = VillageCoordinatesSerializer()
+    morale = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Player
+        fields = ("id", "morale", "nickname", "village")
+
+    def get_morale(self, instance: Player):
+        return instance.village.morale
+
+
+class ResourcesSerializer(serializers.Serializer):
+    resources = serializers.DictField()
+    resourcesIncome = serializers.DictField()
+    resourcesCapacity = serializers.IntegerField()
+
+    def to_representation(self, instance: Village):
+        return {
+            "resources": instance.resources,
+            "resourcesIncome": {
+                "wood": instance.sawmill.get_production(),
+                "clay": instance.clay_pit.get_production(),
+                "iron": instance.iron_mine.get_production(),
+            },
+            "resourcesCapacity": instance.warehouse.get_capacity(),
+        }
+
+
+class BuldingSerializer(serializers.Serializer):
     level = serializers.IntegerField()
+    max_level = serializers.IntegerField()
+    upgrade_cost = serializers.DictField()
+    upgrade_duration = serializers.IntegerField()
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data["upgrade_cost"] = instance.get_upgrade_cost()
-        data["upgrade_time"] = instance.get_upgrade_time().total_seconds()
-        data["max_level"] = instance.MAX_LEVEL
-        return data
-
-
-class TownHallSerializer(BuildingSerializer):
-    pass
-
-
-class WarehouseSerializer(BuildingSerializer):
-    capacity = serializers.SerializerMethodField()
-
-    def get_capacity(self, instance):
-        return instance.get_capacity()
-
-
-class IronMineSerializer(BuildingSerializer):
-    production = serializers.SerializerMethodField()
-
-    def get_production(self, instance):
-        return instance.get_production()
-
-
-class ClayPitSerializer(BuildingSerializer):
-    production = serializers.SerializerMethodField()
-
-    def get_production(self, instance):
-        return instance.get_production()
-
-
-class SawmillSerializer(BuildingSerializer):
-    production = serializers.SerializerMethodField()
-
-    def get_production(self, instance):
-        return instance.get_production()
-
-
-class BarracksSerializer(BuildingSerializer):
-    pass
+    def to_representation(self, instance: Building):
+        return {
+            "level": instance.level,
+            "maxLevel": instance.MAX_LEVEL,
+            "upgradeCost": instance.get_upgrade_cost(),
+            "upgradeDuration": int(instance.get_upgrade_time().total_seconds()),
+        }
 
 
 class VillageSerializer(serializers.ModelSerializer):
-    town_hall = TownHallSerializer()
-    warehouse = WarehouseSerializer()
-    iron_mine = IronMineSerializer()
-    clay_pit = ClayPitSerializer()
-    sawmill = SawmillSerializer()
-    barracks = BarracksSerializer()
+    buildings = serializers.SerializerMethodField()
 
     class Meta:
         model = Village
-        fields = (
-            "morale",
-            "town_hall",
-            "warehouse",
-            "iron_mine",
-            "clay_pit",
-            "sawmill",
-            "barracks",
-        )
+        fields = ("buildings",)
+
+    def get_buildings(self, instance: Village):
+        return {
+            "townHall": BuldingSerializer(instance.town_hall).data,
+            "warehouse": BuldingSerializer(instance.warehouse).data,
+            "sawmill": BuldingSerializer(instance.sawmill).data,
+            "clayPit": BuldingSerializer(instance.clay_pit).data,
+            "ironMine": BuldingSerializer(instance.iron_mine).data,
+            "barracks": BuldingSerializer(instance.barracks).data,
+        }

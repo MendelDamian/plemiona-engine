@@ -1,32 +1,42 @@
 # Plemiona API
 
-## Instruction
+## Setting Up Development Environment
+
+Get redis: (https://redis.io/topics/quickstart)
 ```bash
-# Clone repo
+sudo apt install redis-server
+```
+
+Run redis service:
+```bash
+sudo service redis-server start
+# or
+sudo systemctl start redis-server.service
+```
+
+Clone repo:
+```bash
 git clone git@github.com:MendelDamian/plemiona-engine.git
 cd plemiona-engine
+```
 
-# Install Redis server
-sudo apt-get install redis-server
-
-# Create venv
+Create and activate virtual environment:
+```bash
 python3 -m venv venv
-
-# Activate venv
 source venv/bin/activate
+```
 
-# Install packages
+Install packages:
+```bash
 pip install -r requirements.txt
+```
 
-# Migrate
+Apply migrations:
+```bash
 python manage.py migrate
+```
 
-# Start Redis server
-sudo service redis-server start
-
-# Start Celery worker process
-celery -A plemiona_api worker -l info
-
-# Run development server
+Run development server:
+```bash
 python manage.py runserver
 ```
