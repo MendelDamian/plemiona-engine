@@ -62,6 +62,10 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_discard(self.player_channel_name, self.channel_name)
 
     async def receive_json(self, content, **kwargs):
+        has_started = self.player.game_session.has_started
+        if not has_started:
+            return
+
         command_type = content.get("type", None)
 
         if not self.player:
