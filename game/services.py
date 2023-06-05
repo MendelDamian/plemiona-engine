@@ -4,8 +4,8 @@ from django.utils import timezone
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from game import exceptions, serializers, models
-from .tasks import upgrade_building
+from game import exceptions, serializers, models, tasks
+
 
 class GameSessionConsumerService:
     @staticmethod
@@ -127,7 +127,7 @@ class VillageService:
         village.iron -= upgrade_costs["iron"]
 
         upgrade_time = building.get_upgrade_time().total_seconds()
-        upgrade_building.delay(player.id, building_name, upgrade_time)
+        tasks.upgrade_building.delay(player.id, building_name, upgrade_time)
         GameSessionConsumerService.send_fetch_resources(player)
 
 
