@@ -12,6 +12,7 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
         self.room_group_name: Optional[str] = None
         self.player: Optional[models.Player] = None
         self.player_channel_name: Optional[str] = None
+        self.has_game_session_started: bool = False
 
     async def connect(self):
         self.player = self.scope.get("player", None)
@@ -62,16 +63,18 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_discard(self.player_channel_name, self.channel_name)
 
     async def receive_json(self, content, **kwargs):
-        has_started = self.player.game_session.has_started
-        if not has_started:
-            return
-
         command_type = content.get("type", None)
 
         if not self.player:
             return
 
         await self.player.arefresh_from_db()
+
+        if not self.has_game_session_started:
+            self.has_game_session_started = await self.get_has_game_session_started()
+
+            if not self.has_game_session_started:
+                return
 
         if command_type == "fetch_resources":
             await self.send_message(
@@ -112,3 +115,7 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def get_village(self):
         return serializers.VillageSerializer(self.player.village).data
+
+    @database_sync_to_async
+    def get_has_game_session_started(self):
+        return self.player.game_session.has_started
