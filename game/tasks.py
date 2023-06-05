@@ -20,3 +20,4 @@ def upgrade_building_task(player_id, building_name, seconds):
     village.save()
 
     GameSessionConsumerService.send_fetch_buildings(player)
+    GameSessionConsumerService.send_fetch_resources(player)
