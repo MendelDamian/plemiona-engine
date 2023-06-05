@@ -127,7 +127,7 @@ class VillageService:
         village.iron -= upgrade_costs["iron"]
 
         upgrade_time = building.get_upgrade_time().total_seconds()
-        tasks.upgrade_building.delay(player.id, building_name, upgrade_time)
+        tasks.upgrade_building_task.delay(player.id, building_name, upgrade_time)
         GameSessionConsumerService.send_fetch_resources(player)
 
 

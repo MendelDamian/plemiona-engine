@@ -6,7 +6,7 @@ from game.models import Player
 
 
 @shared_task
-def upgrade_building(player_id, building_name, seconds):
+def upgrade_building_task(player_id, building_name, seconds):
     from game.services import GameSessionConsumerService
 
     sleep(seconds)
