@@ -27,16 +27,25 @@ source venv/bin/activate
 ```
 
 Install packages:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 Apply migrations:
+
 ```bash
 python manage.py migrate
 ```
 
+Start Celery worker process:
+
+```bash
+celery -A plemiona_api worker -l info
+```
+
 Run development server:
+
 ```bash
 python manage.py runserver
 ```
