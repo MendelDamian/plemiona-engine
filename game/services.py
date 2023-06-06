@@ -114,6 +114,11 @@ class VillageService:
 
         village = player.village
         village.update_resources()
+        village.refresh_from_db()
+
+        building_upgrading_state = village.get_building_upgrading_state(building_name)
+        if building_upgrading_state:
+            raise exceptions.BuildingUpgradeException
 
         building = village.get_building(building_name)
         upgrade_costs = building.get_upgrade_cost()
