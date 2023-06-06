@@ -5,7 +5,6 @@ from datetime import timedelta
 
 from django.db import models
 from django.utils import timezone
-from asgiref.sync import async_to_sync
 
 from game import buildings, exceptions
 from utils.models import BaseModel
