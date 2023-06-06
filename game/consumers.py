@@ -31,32 +31,42 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_add(self.player_channel_name, self.channel_name)
         await self.accept()
 
-        players = await self.get_game_session_players()
-        owner = await self.get_owner()
+        self.has_game_session_started = await self.get_has_game_session_started()
 
-        data = {
-            "type": "players_list",
-            "data": {
-                "owner": owner,
-                "players": players,
-            },
-        }
-
-        if first_connection:
-            await self.channel_layer.group_send(
-                self.room_group_name,
+        if self.has_game_session_started:
+            await self.send_json(
                 {
-                    "type": "send_message",
-                    "data": data,
-                },
-            )
-        else:
-            await self.send_message(
-                {
-                    "type": "players_list",
-                    "data": data,
+                    "type": "fetch_players",
+                    "data": {
+                        "players": await self.get_players_in_game(),
+                        "owner": await self.get_owner(),
+                        **await self.get_village(),
+                        **await self.update_resources(),
+                    },
                 }
             )
+        else:
+            players = await self.get_players_in_lobby()
+            owner = await self.get_owner()
+
+            data = {
+                "type": "players_list",
+                "data": {
+                    "owner": owner,
+                    "players": players,
+                },
+            }
+
+            if first_connection:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        "type": "send_message",
+                        "data": data,
+                    },
+                )
+            else:
+                await self.send_json(data)
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
@@ -77,22 +87,31 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
                 return
 
         if command_type == "fetch_resources":
-            await self.send_message(
+            await self.send_json(
                 {
                     "type": "fetch_resources",
                     "data": await self.update_resources(),
                 }
             )
 
-        if command_type == "fetch_buildings":
-            await self.send_message(
+        elif command_type == "fetch_buildings":
+            await self.send_json(
                 {
                     "type": "fetch_buildings",
                     "data": await self.get_village(),
                 }
             )
 
+        elif command_type == "fetch_players":
+            await self.send_json(
+                {
+                    "type": "fetch_players",
+                    "data": await self.get_players_in_game(),
+                }
+            )
+
     async def send_message(self, event):
+        # Should be called by group_send only
         await self.send_json(event["data"])
 
     @database_sync_to_async
@@ -100,7 +119,7 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
         return str(self.player.game_session.game_code)
 
     @database_sync_to_async
-    def get_game_session_players(self):
+    def get_players_in_lobby(self):
         return serializers.PlayerInLobbySerializer(self.player.game_session.player_set.all(), many=True).data
 
     @database_sync_to_async
@@ -119,3 +138,7 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def get_has_game_session_started(self):
         return self.player.game_session.has_started
+
+    @database_sync_to_async
+    def get_players_in_game(self):
+        return serializers.PlayerDataSerializer(self.player.game_session.player_set.all(), many=True).data
