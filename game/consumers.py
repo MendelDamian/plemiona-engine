@@ -36,7 +36,7 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
         if self.has_game_session_started:
             await self.send_json(
                 {
-                    "type": "fetch_players",
+                    "type": "fetch_game_session_state",
                     "data": {
                         "players": await self.get_players_in_game(),
                         "owner": await self.get_owner(),
