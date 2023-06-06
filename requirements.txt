@@ -7,4 +7,5 @@ django-cors-headers
 django-extensions
 daphne
 channels
+celery
 channels_redis

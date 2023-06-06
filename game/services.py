@@ -4,7 +4,7 @@ from django.utils import timezone
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from game import exceptions, serializers, models
+from game import exceptions, serializers, models, tasks
 
 
 class GameSessionConsumerService:
@@ -114,6 +114,11 @@ class VillageService:
 
         village = player.village
         village.update_resources()
+        village.refresh_from_db()
+
+        building_upgrading_state = village.get_building_upgrading_state(building_name)
+        if building_upgrading_state:
+            raise exceptions.BuildingUpgradeException
 
         building = village.get_building(building_name)
         upgrade_costs = building.get_upgrade_cost()
@@ -126,12 +131,9 @@ class VillageService:
         village.clay -= upgrade_costs["clay"]
         village.iron -= upgrade_costs["iron"]
 
-        building.upgrade()
-        village.upgrade_building_level(building_name)
-        village.save()
-
+        upgrade_time = building.get_upgrade_time().total_seconds()
+        tasks.upgrade_building_task.delay(player.id, building_name, upgrade_time)
         GameSessionConsumerService.send_fetch_resources(player)
-        GameSessionConsumerService.send_fetch_buildings(player)
 
 
 class CoordinateService:

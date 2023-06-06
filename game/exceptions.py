@@ -53,4 +53,9 @@ class InsufficientResourcesException(APIException):
 
 class BuildingMaxLevelException(APIException):
     status_code = 400
-    default_detail = {"Building level": ["This building has already reached maximum level"]}
+    default_detail = {"Building level": ["This building has already reached maximum level."]}
+
+
+class BuildingUpgradeException(APIException):
+    status_code = 400
+    default_detail = {"Building upgrade": ["Building is currently being upgraded."]}
