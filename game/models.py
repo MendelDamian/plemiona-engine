@@ -5,6 +5,7 @@ from datetime import timedelta
 
 from django.db import models
 from django.utils import timezone
+from asgiref.sync import async_to_sync
 
 from game import buildings, exceptions
 from utils.models import BaseModel
@@ -93,6 +94,14 @@ class Village(BaseModel):
     sawmill_level = models.IntegerField(default=1, null=False)
     barracks_level = models.IntegerField(default=1, null=False)
 
+    # Upgrading status
+    is_town_hall_upgrading = models.BooleanField(default=False, null=False)
+    is_warehouse_upgrading = models.BooleanField(default=False, null=False)
+    is_iron_mine_upgrading = models.BooleanField(default=False, null=False)
+    is_clay_pit_upgrading = models.BooleanField(default=False, null=False)
+    is_sawmill_upgrading = models.BooleanField(default=False, null=False)
+    is_barracks_upgrading = models.BooleanField(default=False, null=False)
+
     @property
     def town_hall(self):
         return buildings.TownHall(level=self.town_hall_level)
@@ -170,6 +179,38 @@ class Village(BaseModel):
             raise exceptions.BuildingNotFoundException
 
         return building
+
+    def get_building_upgrading_state(self, name):
+        buildings_statuses = {
+            "town_hall": self.is_town_hall_upgrading,
+            "warehouse": self.is_warehouse_upgrading,
+            "iron_mine": self.is_iron_mine_upgrading,
+            "clay_pit": self.is_clay_pit_upgrading,
+            "sawmill": self.is_sawmill_upgrading,
+            "barracks": self.is_barracks_upgrading,
+        }
+
+        building_status = buildings_statuses.get(name, None)
+        if building_status is None:
+            raise exceptions.BuildingNotFoundException
+
+        return building_status
+
+    def set_building_upgrading_state(self, name, state):
+        if name == "town_hall":
+            self.is_town_hall_upgrading = state
+        elif name == "warehouse":
+            self.is_warehouse_upgrading = state
+        elif name == "iron_mine":
+            self.is_iron_mine_upgrading = state
+        elif name == "clay_pit":
+            self.is_clay_pit_upgrading = state
+        elif name == "sawmill":
+            self.is_sawmill_upgrading = state
+        elif name == "barracks":
+            self.is_barracks_upgrading = state
+        else:
+            raise exceptions.BuildingNotFoundException
 
     def __str__(self):
         return f"Village {self.id}"
