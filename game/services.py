@@ -35,7 +35,7 @@ class GameSessionConsumerService:
         GameSessionConsumerService._send_message(player.channel_name, data)
 
     @staticmethod
-    def send_players_leaderboard(game_session: models.GameSession):
+    def send_leaderboard(game_session: models.GameSession):
         players_list = serializers.PlayersLeaderboardSerializer(game_session.player_set.all(), many=True).data
         data = {
             "type": "fetch_leaderboard",
