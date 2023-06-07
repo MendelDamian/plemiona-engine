@@ -85,7 +85,7 @@ class VillageSerializer(serializers.ModelSerializer):
         }
 
 
-class PlayersLeaderboardSerializer(serializers.ModelSerializer):
+class PlayerResultsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
         fields = ("id", "nickname", "points")

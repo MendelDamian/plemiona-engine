@@ -30,4 +30,4 @@ def send_leaderboard_task(game_session_id, seconds):
     sleep(seconds)
 
     game_session = GameSession.objects.get(id=game_session_id)
-    GameSessionConsumerService.send_leaderboard(game_session)
+    GameSessionConsumerService.send_fetch_leaderboard(game_session)
