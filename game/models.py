@@ -102,6 +102,21 @@ class Village(BaseModel):
     is_sawmill_upgrading = models.BooleanField(default=False, null=False)
     is_barracks_upgrading = models.BooleanField(default=False, null=False)
 
+    # Units in the barracks
+    units_spearman = models.IntegerField(default=0, null=False)
+    units_swordman = models.IntegerField(default=0, null=False)
+    units_axeman = models.IntegerField(default=0, null=False)
+    units_archer = models.IntegerField(default=0, null=False)
+
+    @property
+    def units(self):
+        return {
+            "spearman": self.units_spearman,
+            "swordman": self.units_swordman,
+            "axeman": self.units_axeman,
+            "archer": self.units_archer,
+        }
+
     @property
     def town_hall(self):
         return buildings.TownHall(level=self.town_hall_level)
