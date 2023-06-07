@@ -59,3 +59,8 @@ class BuildingMaxLevelException(APIException):
 class BuildingUpgradeException(APIException):
     status_code = 400
     default_detail = {"Building upgrade": ["Building is currently being upgraded."]}
+
+
+class UnitNotFoundException(APIException):
+    status_code = 404
+    default_detail = {"Unit": ["Unit not found."]}
