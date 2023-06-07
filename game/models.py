@@ -68,6 +68,7 @@ class Player(BaseModel):
 class Village(BaseModel):
     MAX_MORALE = 100
     BUILDING_NAMES = ("town_hall", "warehouse", "iron_mine", "clay_pit", "sawmill", "barracks")
+    UNIT_NAMES = ("spearman", "swordsman", "axeman", "archer")
 
     morale = models.IntegerField(default=MAX_MORALE, null=False)
 
@@ -107,6 +108,8 @@ class Village(BaseModel):
     units_swordman = models.IntegerField(default=0, null=False)
     units_axeman = models.IntegerField(default=0, null=False)
     units_archer = models.IntegerField(default=0, null=False)
+
+    are_units_training = models.BooleanField(default=False, null=False)
 
     @property
     def units(self):
