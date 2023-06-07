@@ -5,6 +5,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 from game import exceptions, serializers, models, tasks
+from game.models import Village
 
 
 class GameSessionConsumerService:
@@ -112,26 +113,18 @@ class VillageService:
         if not player.game_session.has_started:
             raise exceptions.GameSessionNotStartedException
 
+        if building_name not in Village.BUILDING_NAMES:
+            raise exceptions.BuildingNotFoundException
+
         village = player.village
         village.update_resources()
-        village.refresh_from_db()
 
-        building_upgrading_state = village.get_building_upgrading_state(building_name)
-        if building_upgrading_state:
+        if village.buildings_upgrading_state[building_name]:
             raise exceptions.BuildingUpgradeException
 
-        building = village.get_building(building_name)
+        building = village.buildings[building_name]
         upgrade_costs = building.get_upgrade_cost()
-
-        for resource in upgrade_costs:
-            if village.resources[resource] < upgrade_costs[resource]:
-                raise exceptions.InsufficientResourcesException
-
-        village.wood -= upgrade_costs["wood"]
-        village.clay -= upgrade_costs["clay"]
-        village.iron -= upgrade_costs["iron"]
-
-        village.save()
+        village.charge_resources(upgrade_costs)
 
         upgrade_time = building.get_upgrade_time().total_seconds()
         tasks.upgrade_building_task.delay(player.id, building_name, upgrade_time)
