@@ -1,27 +1,23 @@
 from time import sleep
 
-from celery import shared_task
-
 from game.models import Player
+from plemiona_api.celery import app
 
 
-@shared_task
+@app.task
 def upgrade_building_task(player_id, building_name, seconds):
     from game.services import GameSessionConsumerService
 
     player = Player.objects.get(id=player_id)
-    village = player.village
-    building = village.get_building(building_name)
-
-    village.set_building_upgrading_state(building_name, True)
-    village.save()
+    player.village.set_building_upgrading_state(building_name, True)
 
     sleep(seconds)
 
-    building.upgrade()
-    village.upgrade_building_level(building_name)
-    village.set_building_upgrading_state(building_name, False)
-    village.save()
+    refreshed_player = Player.objects.get(id=player_id)
+    refreshed_player.village.update_resources()
 
-    GameSessionConsumerService.send_fetch_buildings(player)
-    GameSessionConsumerService.send_fetch_resources(player)
+    refreshed_player.village.upgrade_building_level(building_name)
+    refreshed_player.village.set_building_upgrading_state(building_name, False)
+
+    GameSessionConsumerService.send_fetch_buildings(refreshed_player)
+    GameSessionConsumerService.send_fetch_resources(refreshed_player)

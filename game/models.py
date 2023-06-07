@@ -172,6 +172,8 @@ class Village(BaseModel):
         else:
             raise exceptions.BuildingNotFoundException
 
+        self.save()
+
     def get_building(self, name):
         building = self.buildings.get(name, None)
         if not building:
@@ -210,6 +212,8 @@ class Village(BaseModel):
             self.is_barracks_upgrading = state
         else:
             raise exceptions.BuildingNotFoundException
+
+        self.save()
 
     def __str__(self):
         return f"Village {self.id}"
