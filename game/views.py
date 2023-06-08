@@ -48,5 +48,6 @@ class TrainUnitsView(APIView):
         serializer = serializers.TrainUnitsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        services.VillageService.train_units(request.user, **serializer.validated_data)
+        units_to_train = serializer.validated_data["units"]
+        services.VillageService.train_units(request.user, units_to_train=units_to_train)
         return Response(status=status.HTTP_204_NO_CONTENT)
