@@ -40,7 +40,7 @@ class GameSessionConsumerService:
     def send_fetch_units(player: models.Player):
         data = {
             "type": "fetch_units",
-            "data": serializers.UnitsInVillageSerializer(player.village).data,
+            "data": serializers.UnitsCountInVillageSerializer(player.village).data,
         }
         GameSessionConsumerService._send_message(player.channel_name, data)
 

@@ -96,13 +96,13 @@ class VillageSerializer(serializers.ModelSerializer):
         }
 
 
-class UnitsInVillageSerializer(serializers.Serializer):
+class UnitsCountInVillageSerializer(serializers.Serializer):
     units = serializers.SerializerMethodField()
 
     def get_units(self, instance: Village):
         return {
-            "spearman": instance.spearman_count,
-            "swordsman": instance.swordsman_count,
-            "axeman": instance.axeman_count,
-            "archer": instance.archer_count,
+            "spearman": {"count": instance.spearman_count},
+            "swordsman": {"count": instance.swordsman_count},
+            "axeman": {"count": instance.axeman_count},
+            "archer": {"count": instance.archer_count},
         }
