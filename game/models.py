@@ -38,6 +38,18 @@ class GameSession(BaseModel):
         return str(self.game_code)
 
 
+class Task(BaseModel):
+    TASK_ID_LENGTH = 36
+
+    task_id = models.CharField(max_length=TASK_ID_LENGTH, null=False)
+    has_ended = models.BooleanField(default=False, null=False)
+
+    game_session = models.ForeignKey("GameSession", on_delete=models.CASCADE, null=False)
+
+    def __str__(self):
+        return str(self.task_id)
+
+
 class Player(BaseModel):
     NICKNAME_MIN_LENGTH = 3
     NICKNAME_MAX_LENGTH = 15
