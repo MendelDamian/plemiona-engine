@@ -83,3 +83,9 @@ class VillageSerializer(serializers.ModelSerializer):
             "ironMine": BuldingSerializer(instance.iron_mine).data,
             "barracks": BuldingSerializer(instance.barracks).data,
         }
+
+
+class PlayerResultsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Player
+        fields = ("id", "nickname", "points")

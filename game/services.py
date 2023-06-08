@@ -35,6 +35,17 @@ class GameSessionConsumerService:
         GameSessionConsumerService._send_message(player.channel_name, data)
 
     @staticmethod
+    def send_fetch_leaderboard(game_session: models.GameSession):
+        player_results_list = serializers.PlayerResultsSerializer(game_session.player_set.all(), many=True).data
+        data = {
+            "type": "fetch_leaderboard",
+            "data": {
+                "leaderboard": sorted(player_results_list, key=lambda x: x["points"], reverse=True)
+            }
+        }
+        GameSessionConsumerService._send_message(game_session.game_code, data)
+
+    @staticmethod
     def _send_message(channel_name, data):
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
@@ -104,6 +115,9 @@ class GameSessionService:
         for player in game_session.player_set.all():
             GameSessionConsumerService.send_fetch_resources(player)
             GameSessionConsumerService.send_fetch_buildings(player)
+
+        game_session_duration = game_session.DURATION.total_seconds()
+        tasks.send_leaderboard_task.delay(game_session.id, game_session_duration)
 
 
 class VillageService:
