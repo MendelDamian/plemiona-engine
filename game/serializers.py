@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from game.buildings import Building
 from game.models import Player, Village, GameSession
+from game.units import Unit
 
 
 class CreateGameSessionSerializer(serializers.Serializer):
@@ -92,4 +93,16 @@ class VillageSerializer(serializers.ModelSerializer):
             "clayPit": BuldingSerializer(instance.clay_pit).data,
             "ironMine": BuldingSerializer(instance.iron_mine).data,
             "barracks": BuldingSerializer(instance.barracks).data,
+        }
+
+
+class UnitsInVillageSerializer(serializers.Serializer):
+    units = serializers.SerializerMethodField()
+
+    def get_units(self, instance: Village):
+        return {
+            "spearman": instance.spearman_count,
+            "swordsman": instance.swordsman_count,
+            "axeman": instance.axeman_count,
+            "archer": instance.archer_count,
         }
