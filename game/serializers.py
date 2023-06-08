@@ -115,9 +115,11 @@ class UnitSerializer(serializers.Serializer):
     carrying_capacity = serializers.IntegerField()
     offensive_strength = serializers.IntegerField()
     defensive_strength = serializers.IntegerField()
+    count = serializers.IntegerField()
 
     def to_representation(self, instance: Unit):
         return {
+            "count": instance.count,
             "speed": int(instance.SPEED.total_seconds()),
             "trainigDuration": int(instance.TRAINING_TIME.total_seconds()),
             "trainingCost": instance.get_training_cost(1),
