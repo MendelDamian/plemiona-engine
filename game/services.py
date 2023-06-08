@@ -145,6 +145,9 @@ class VillageService:
         if not player.game_session.has_started:
             raise exceptions.GameSessionNotStartedException
 
+        if player.game_session.has_ended:
+            raise exceptions.GameSessionAlreadyEndedException
+
         if building_name not in Village.BUILDING_NAMES:
             raise exceptions.BuildingNotFoundException
 
@@ -166,6 +169,9 @@ class VillageService:
     def train_units(player, units_to_train: list[OrderedDict]):
         if not player.game_session.has_started:
             raise exceptions.GameSessionNotStartedException
+
+        if player.game_session.has_ended:
+            raise exceptions.GameSessionAlreadyEndedException
 
         if player.village.are_units_training:
             raise exceptions.UnitsAreAlreadyBeingTrainedException
