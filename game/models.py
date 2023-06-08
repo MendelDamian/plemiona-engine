@@ -245,5 +245,19 @@ class Village(BaseModel):
 
         self.save()
 
+    def increase_unit_count(self, unit_name, count):
+        if unit_name == "spearman":
+            self.spearman_count += count
+        elif unit_name == "swordman":
+            self.swordsman_count += count
+        elif unit_name == "axeman":
+            self.axeman_count += count
+        elif unit_name == "archer":
+            self.archer_count += count
+        else:
+            raise exceptions.UnitNotFoundException
+
+        self.save()
+
     def __str__(self):
         return f"Village {self.id}"
