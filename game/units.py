@@ -24,21 +24,17 @@ class Unit:
     def __init__(self, count: int = 0):
         self.count = count
 
-    def get_training_cost(self, unit_count: Optional[int] = None) -> dict[str, int]:
-        if unit_count is None:
-            unit_count = self.count
-
+    @classmethod
+    def get_training_cost(cls, unit_count: int) -> dict[str, int]:
         return {
-            "wood": self.WOOD_COST * unit_count,
-            "clay": self.CLAY_COST * unit_count,
-            "iron": self.IRON_COST * unit_count,
+            "wood": cls.WOOD_COST * unit_count,
+            "clay": cls.CLAY_COST * unit_count,
+            "iron": cls.IRON_COST * unit_count,
         }
 
-    def get_training_time(self, unit_count: Optional[int] = None) -> timedelta:
-        if unit_count is None:
-            unit_count = self.count
-
-        return self.TRAINING_TIME * unit_count
+    @classmethod
+    def get_training_time(cls, unit_count: int) -> timedelta:
+        return cls.TRAINING_TIME * unit_count
 
     @property
     def carrying_capacity(self) -> int:
@@ -110,3 +106,11 @@ class Archer(Unit):
 
     OFFENSIVE_STRENGTH = 15
     DEFENSIVE_STRENGTH = 50
+
+
+UNITS = {
+    "spearman": Spearman,
+    "swordsman": Swordsman,
+    "axeman": Axeman,
+    "archer": Archer,
+}
