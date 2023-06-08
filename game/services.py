@@ -37,10 +37,18 @@ class GameSessionConsumerService:
         GameSessionConsumerService._send_message(player.channel_name, data)
 
     @staticmethod
-    def send_fetch_units(player: models.Player):
+    def send_fetch_units_count(player: models.Player):
         data = {
             "type": "fetch_units",
             "data": serializers.UnitsCountInVillageSerializer(player.village).data,
+        }
+        GameSessionConsumerService._send_message(player.channel_name, data)
+
+    @staticmethod
+    def send_fetch_units(player: models.Player):
+        data = {
+            "type": "fetch_units",
+            "data": serializers.UnitsInVillageSerializer(player.village).data,
         }
         GameSessionConsumerService._send_message(player.channel_name, data)
 
@@ -114,6 +122,7 @@ class GameSessionService:
         for player in game_session.player_set.all():
             GameSessionConsumerService.send_fetch_resources(player)
             GameSessionConsumerService.send_fetch_buildings(player)
+            GameSessionConsumerService.send_fetch_units(player)
 
 
 class VillageService:
