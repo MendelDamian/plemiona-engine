@@ -6,7 +6,7 @@ from datetime import timedelta
 from django.db import models
 from django.utils import timezone
 
-from game import buildings, exceptions
+from game import buildings, exceptions, units
 from utils.models import BaseModel
 
 
@@ -17,7 +17,7 @@ class GameSession(BaseModel):
     DURATION = timedelta(hours=1)
 
     owner = models.OneToOneField("Player", on_delete=models.CASCADE, null=True, related_name="owned_game_session")
-    game_code = models.CharField(max_length=GAME_CODE_LENGTH, null=False)
+    game_code = models.CharField(max_length=GAME_CODE_LENGTH, null=False, unique=True, editable=False, db_index=True)
     has_started = models.BooleanField(default=False, null=False)
     ended_at = models.DateTimeField(null=True, default=None)
 
@@ -67,6 +67,8 @@ class Player(BaseModel):
 
 class Village(BaseModel):
     MAX_MORALE = 100
+    BUILDING_NAMES = ("town_hall", "warehouse", "iron_mine", "clay_pit", "sawmill", "barracks")
+    UNIT_NAMES = ("spearman", "swordsman", "axeman", "archer")
 
     morale = models.IntegerField(default=MAX_MORALE, null=False)
 
@@ -100,6 +102,39 @@ class Village(BaseModel):
     is_clay_pit_upgrading = models.BooleanField(default=False, null=False)
     is_sawmill_upgrading = models.BooleanField(default=False, null=False)
     is_barracks_upgrading = models.BooleanField(default=False, null=False)
+
+    # Units in the barracks
+    spearman_count = models.IntegerField(default=0, null=False)
+    swordsman_count = models.IntegerField(default=0, null=False)
+    axeman_count = models.IntegerField(default=0, null=False)
+    archer_count = models.IntegerField(default=0, null=False)
+
+    are_units_training = models.BooleanField(default=False, null=False)
+
+    @property
+    def spearman(self):
+        return units.Spearman(count=self.spearman_count)
+
+    @property
+    def swordsman(self):
+        return units.Swordsman(count=self.swordsman_count)
+
+    @property
+    def axeman(self):
+        return units.Axeman(count=self.axeman_count)
+
+    @property
+    def archer(self):
+        return units.Archer(count=self.archer_count)
+
+    @property
+    def units(self) -> dict[str, units.Unit]:
+        return {
+            "spearman": self.spearman,
+            "swordman": self.swordsman,
+            "axeman": self.axeman,
+            "archer": self.archer,
+        }
 
     @property
     def town_hall(self):
@@ -136,6 +171,17 @@ class Village(BaseModel):
             "barracks": self.barracks,
         }
 
+    @property
+    def buildings_upgrading_state(self):
+        return {
+            "town_hall": self.is_town_hall_upgrading,
+            "warehouse": self.is_warehouse_upgrading,
+            "iron_mine": self.is_iron_mine_upgrading,
+            "clay_pit": self.is_clay_pit_upgrading,
+            "sawmill": self.is_sawmill_upgrading,
+            "barracks": self.is_barracks_upgrading,
+        }
+
     def update_resources(self):
         if not self.last_resources_update:
             self.last_resources_update = timezone.now()
@@ -156,62 +202,63 @@ class Village(BaseModel):
         self.last_resources_update = timezone.now()
         self.save()
 
-    def upgrade_building_level(self, name):
-        if name == "town_hall":
+    def charge_resources(self, resources):
+        if self.wood < resources["wood"] or self.iron < resources["iron"] or self.clay < resources["clay"]:
+            raise exceptions.InsufficientResourcesException
+
+        self.wood -= resources["wood"]
+        self.iron -= resources["iron"]
+        self.clay -= resources["clay"]
+
+        self.save()
+
+    def upgrade_building_level(self, building_name):
+        if building_name == "town_hall":
             self.town_hall_level += 1
-        elif name == "warehouse":
+        elif building_name == "warehouse":
             self.warehouse_level += 1
-        elif name == "iron_mine":
+        elif building_name == "iron_mine":
             self.iron_mine_level += 1
-        elif name == "clay_pit":
+        elif building_name == "clay_pit":
             self.clay_pit_level += 1
-        elif name == "sawmill":
+        elif building_name == "sawmill":
             self.sawmill_level += 1
-        elif name == "barracks":
+        elif building_name == "barracks":
             self.barracks_level += 1
         else:
             raise exceptions.BuildingNotFoundException
 
         self.save()
 
-    def get_building(self, name):
-        building = self.buildings.get(name, None)
-        if not building:
-            raise exceptions.BuildingNotFoundException
-
-        return building
-
-    def get_building_upgrading_state(self, name):
-        buildings_statuses = {
-            "town_hall": self.is_town_hall_upgrading,
-            "warehouse": self.is_warehouse_upgrading,
-            "iron_mine": self.is_iron_mine_upgrading,
-            "clay_pit": self.is_clay_pit_upgrading,
-            "sawmill": self.is_sawmill_upgrading,
-            "barracks": self.is_barracks_upgrading,
-        }
-
-        building_status = buildings_statuses.get(name, None)
-        if building_status is None:
-            raise exceptions.BuildingNotFoundException
-
-        return building_status
-
-    def set_building_upgrading_state(self, name, state):
-        if name == "town_hall":
+    def set_building_upgrading_state(self, building_name, state):
+        if building_name == "town_hall":
             self.is_town_hall_upgrading = state
-        elif name == "warehouse":
+        elif building_name == "warehouse":
             self.is_warehouse_upgrading = state
-        elif name == "iron_mine":
+        elif building_name == "iron_mine":
             self.is_iron_mine_upgrading = state
-        elif name == "clay_pit":
+        elif building_name == "clay_pit":
             self.is_clay_pit_upgrading = state
-        elif name == "sawmill":
+        elif building_name == "sawmill":
             self.is_sawmill_upgrading = state
-        elif name == "barracks":
+        elif building_name == "barracks":
             self.is_barracks_upgrading = state
         else:
             raise exceptions.BuildingNotFoundException
+
+        self.save()
+
+    def increase_unit_count(self, unit_name, count):
+        if unit_name == "spearman":
+            self.spearman_count += count
+        elif unit_name == "swordman":
+            self.swordsman_count += count
+        elif unit_name == "axeman":
+            self.axeman_count += count
+        elif unit_name == "archer":
+            self.archer_count += count
+        else:
+            raise exceptions.UnitNotFoundException
 
         self.save()
 

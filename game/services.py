@@ -1,10 +1,12 @@
 import random
+from typing import OrderedDict
 
 from django.utils import timezone
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from game import exceptions, serializers, models, tasks
+from game import exceptions, serializers, models, tasks, units
+from game.models import Village
 
 
 class GameSessionConsumerService:
@@ -35,13 +37,29 @@ class GameSessionConsumerService:
         GameSessionConsumerService._send_message(player.channel_name, data)
 
     @staticmethod
+    def send_fetch_units_count(player: models.Player):
+        data = {
+            "type": "fetch_units",
+            "data": serializers.UnitsCountInVillageSerializer(player.village).data,
+        }
+        GameSessionConsumerService._send_message(player.channel_name, data)
+
+    @staticmethod
+    def send_fetch_units(player: models.Player):
+        data = {
+            "type": "fetch_units",
+            "data": serializers.UnitsInVillageSerializer(player.village).data,
+        }
+        GameSessionConsumerService._send_message(player.channel_name, data)
+
+    @staticmethod
     def send_fetch_leaderboard(game_session: models.GameSession):
         player_results_list = serializers.PlayerResultsSerializer(game_session.player_set.all(), many=True).data
         data = {
             "type": "fetch_leaderboard",
             "data": {
-                "leaderboard": sorted(player_results_list, key=lambda x: x["points"], reverse=True)
-            }
+                "leaderboard": sorted(player_results_list, key=lambda x: x["points"], reverse=True),
+            },
         }
         GameSessionConsumerService._send_message(game_session.game_code, data)
 
@@ -115,6 +133,7 @@ class GameSessionService:
         for player in game_session.player_set.all():
             GameSessionConsumerService.send_fetch_resources(player)
             GameSessionConsumerService.send_fetch_buildings(player)
+            GameSessionConsumerService.send_fetch_units(player)
 
         game_session_duration = game_session.DURATION.total_seconds()
         tasks.send_leaderboard_task.delay(game_session.id, game_session_duration)
@@ -126,29 +145,46 @@ class VillageService:
         if not player.game_session.has_started:
             raise exceptions.GameSessionNotStartedException
 
+        if building_name not in Village.BUILDING_NAMES:
+            raise exceptions.BuildingNotFoundException
+
         village = player.village
         village.update_resources()
-        village.refresh_from_db()
 
-        building_upgrading_state = village.get_building_upgrading_state(building_name)
-        if building_upgrading_state:
+        if village.buildings_upgrading_state[building_name]:
             raise exceptions.BuildingUpgradeException
 
-        building = village.get_building(building_name)
+        building = village.buildings[building_name]
         upgrade_costs = building.get_upgrade_cost()
-
-        for resource in upgrade_costs:
-            if village.resources[resource] < upgrade_costs[resource]:
-                raise exceptions.InsufficientResourcesException
-
-        village.wood -= upgrade_costs["wood"]
-        village.clay -= upgrade_costs["clay"]
-        village.iron -= upgrade_costs["iron"]
-
-        village.save()
+        village.charge_resources(upgrade_costs)
 
         upgrade_time = building.get_upgrade_time().total_seconds()
         tasks.upgrade_building_task.delay(player.id, building_name, upgrade_time)
+        GameSessionConsumerService.send_fetch_resources(player)
+
+    @staticmethod
+    def train_units(player, units_to_train: list[OrderedDict]):
+        if not player.game_session.has_started:
+            raise exceptions.GameSessionNotStartedException
+
+        if player.village.are_units_training:
+            raise exceptions.UnitsAreAlreadyBeingTrainedException
+
+        accumulated_cost = {"wood": 0, "clay": 0, "iron": 0}
+
+        for unit in units_to_train:
+            unit_name, unit_count = unit["name"], unit["count"]
+
+            trainig_cost = units.UNITS[unit_name].get_training_cost(unit_count)
+
+            for resource_name, resource_cost in trainig_cost.items():
+                accumulated_cost[resource_name] += resource_cost
+
+        village = player.village
+        village.update_resources()
+        village.charge_resources(accumulated_cost)
+
+        tasks.train_units_task.delay(player.id, units_to_train)
         GameSessionConsumerService.send_fetch_resources(player)
 
 

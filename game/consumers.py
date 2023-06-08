@@ -42,6 +42,7 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
                         "owner": await self.get_owner(),
                         **await self.get_village(),
                         **await self.update_resources(),
+                        **await self.get_units(),
                     },
                 }
             )
@@ -142,3 +143,7 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def get_players_in_game(self):
         return serializers.PlayerDataSerializer(self.player.game_session.player_set.all(), many=True).data
+
+    @database_sync_to_async
+    def get_units(self):
+        return serializers.UnitsInVillageSerializer(self.player.village).data
