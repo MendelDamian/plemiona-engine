@@ -21,38 +21,38 @@ class Unit:
     OFFENSIVE_STRENGTH: ClassVar[int] = 0
     DEFENSIVE_STRENGTH: ClassVar[int] = 0
 
-    def __init__(self, amount: int = 0):
-        self.amount = amount
+    def __init__(self, count: int = 0):
+        self.count = count
 
     @property
     def training_cost(self) -> dict:
         return {
-            "wood": self.WOOD_COST * self.amount,
-            "clay": self.CLAY_COST * self.amount,
-            "iron": self.IRON_COST * self.amount,
+            "wood": self.WOOD_COST * self.count,
+            "clay": self.CLAY_COST * self.count,
+            "iron": self.IRON_COST * self.count,
         }
 
     @property
     def training_time(self) -> timedelta:
-        return self.TRAINING_TIME * self.amount
+        return self.TRAINING_TIME * self.count
 
     @property
     def carrying_capacity(self) -> int:
-        return self.CARRYING_CAPACITY * self.amount
+        return self.CARRYING_CAPACITY * self.count
 
     @property
     def offensive_strength(self) -> int:
-        return self.OFFENSIVE_STRENGTH * self.amount
+        return self.OFFENSIVE_STRENGTH * self.count
 
     @property
     def defensive_strength(self) -> int:
-        return self.DEFENSIVE_STRENGTH * self.amount
+        return self.DEFENSIVE_STRENGTH * self.count
 
     def get_speed(self, distance_in_fields: int) -> timedelta:
         return self.SPEED * distance_in_fields
 
 
-class SpearFighter(Unit):
+class Spearman(Unit):
     SPEED = timedelta(seconds=18)
     TRAINING_TIME = timedelta(seconds=5)
 
@@ -80,7 +80,7 @@ class Swordsman(Unit):
     DEFENSIVE_STRENGTH = 50
 
 
-class AxeFighter(Unit):
+class Axeman(Unit):
     SPEED = timedelta(seconds=18)
     TRAINING_TIME = timedelta(seconds=7)
 
