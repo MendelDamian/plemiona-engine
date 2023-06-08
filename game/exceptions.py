@@ -69,3 +69,8 @@ class UnitNotFoundException(APIException):
 class UnitsAreAlreadyBeingTrainedException(APIException):
     status_code = 400
     default_detail = {"Units": ["Units are already being trained."]}
+
+
+class GameSessionAlreadyEndedException(APIException):
+    status_code = 400
+    default_detail = {"Game Session": ["Game session has already ended."]}
