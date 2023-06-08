@@ -16,7 +16,7 @@ class TrainUnitsSerializer(serializers.Serializer):
         name = serializers.ChoiceField(
             choices=Village.UNIT_NAMES, required=True, error_messages={"invalid_choice": "Invalid unit name"}
         )
-        amount = serializers.IntegerField(min_value=1, required=True)
+        count = serializers.IntegerField(min_value=1, required=True)
 
     units = UnitSerializer(many=True, required=True)
 
