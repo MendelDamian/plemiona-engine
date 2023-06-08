@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 
 class Unit:
