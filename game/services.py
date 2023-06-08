@@ -58,8 +58,8 @@ class GameSessionConsumerService:
         data = {
             "type": "fetch_leaderboard",
             "data": {
-                "leaderboard": sorted(player_results_list, key=lambda x: x["points"], reverse=True)
-            }
+                "leaderboard": sorted(player_results_list, key=lambda x: x["points"], reverse=True),
+            },
         }
         GameSessionConsumerService._send_message(game_session.game_code, data)
 
