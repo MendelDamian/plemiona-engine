@@ -137,3 +137,9 @@ class UnitsInVillageSerializer(serializers.Serializer):
             "axeman": UnitSerializer(instance.axeman).data,
             "archer": UnitSerializer(instance.archer).data,
         }
+
+
+class PlayerResultsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Player
+        fields = ("id", "nickname", "points")

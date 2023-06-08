@@ -2,7 +2,7 @@ from time import sleep
 from collections import OrderedDict
 
 from game import exceptions
-from game.models import Player, Village
+from game.models import Player, Village, GameSession
 from plemiona_api.celery import app
 
 
@@ -28,6 +28,16 @@ def upgrade_building_task(player_id, building_name, seconds):
 
     GameSessionConsumerService.send_fetch_buildings(refreshed_player)
     GameSessionConsumerService.send_fetch_resources(refreshed_player)
+
+
+@app.task
+def send_leaderboard_task(game_session_id, seconds):
+    from game.services import GameSessionConsumerService
+
+    sleep(seconds)
+
+    game_session = GameSession.objects.get(id=game_session_id)
+    GameSessionConsumerService.send_fetch_leaderboard(game_session)
 
 
 @app.task
