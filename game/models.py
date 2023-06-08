@@ -6,7 +6,7 @@ from datetime import timedelta
 from django.db import models
 from django.utils import timezone
 
-from game import buildings, exceptions
+from game import buildings, exceptions, units
 from utils.models import BaseModel
 
 
@@ -104,20 +104,33 @@ class Village(BaseModel):
     is_barracks_upgrading = models.BooleanField(default=False, null=False)
 
     # Units in the barracks
-    units_spearman = models.IntegerField(default=0, null=False)
-    units_swordman = models.IntegerField(default=0, null=False)
-    units_axeman = models.IntegerField(default=0, null=False)
-    units_archer = models.IntegerField(default=0, null=False)
+    spearman_count = models.IntegerField(default=0, null=False)
+    swordsman_count = models.IntegerField(default=0, null=False)
+    axeman_count = models.IntegerField(default=0, null=False)
+    archer_count = models.IntegerField(default=0, null=False)
 
     are_units_training = models.BooleanField(default=False, null=False)
 
     @property
+    def spearman(self):
+        return units.Spearman(count=self.spearman_count)
+
+    def swordsman(self):
+        return units.Swordsman(count=self.swordsman_count)
+
+    def axeman(self):
+        return units.Axeman(count=self.axeman_count)
+
+    def archer(self):
+        return units.Archer(count=self.archer_count)
+
+    @property
     def units(self):
         return {
-            "spearman": self.units_spearman,
-            "swordman": self.units_swordman,
-            "axeman": self.units_axeman,
-            "archer": self.units_archer,
+            "spearman": self.spearman,
+            "swordman": self.swordsman,
+            "axeman": self.axeman,
+            "archer": self.archer,
         }
 
     @property
