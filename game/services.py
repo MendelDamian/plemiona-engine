@@ -1,10 +1,11 @@
 import random
+from typing import OrderedDict
 
 from django.utils import timezone
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from game import exceptions, serializers, models, tasks
+from game import exceptions, serializers, models, tasks, units
 from game.models import Village
 
 
@@ -32,6 +33,14 @@ class GameSessionConsumerService:
         data = {
             "type": "fetch_buildings",
             "data": serializers.VillageSerializer(player.village).data,
+        }
+        GameSessionConsumerService._send_message(player.channel_name, data)
+
+    @staticmethod
+    def send_fetch_units(player: models.Player):
+        data = {
+            "type": "fetch_units",
+            "data": serializers.UnitsInVillageSerializer(player.village).data,
         }
         GameSessionConsumerService._send_message(player.channel_name, data)
 
@@ -128,6 +137,28 @@ class VillageService:
 
         upgrade_time = building.get_upgrade_time().total_seconds()
         tasks.upgrade_building_task.delay(player.id, building_name, upgrade_time)
+        GameSessionConsumerService.send_fetch_resources(player)
+
+    @staticmethod
+    def train_units(player, units_to_train: list[OrderedDict]):
+        if not player.game_session.has_started:
+            raise exceptions.GameSessionNotStartedException
+
+        accumulated_cost = {"wood": 0, "clay": 0, "iron": 0}
+
+        for unit in units_to_train:
+            unit_name, unit_count = unit["name"], unit["count"]
+
+            trainig_cost = units.UNITS[unit_name].get_training_cost(unit_count)
+
+            for resource_name, resource_cost in trainig_cost.items():
+                accumulated_cost[resource_name] += resource_cost
+
+        village = player.village
+        village.update_resources()
+        village.charge_resources(accumulated_cost)
+
+        tasks.train_units_task.delay(player.id, units_to_train)
         GameSessionConsumerService.send_fetch_resources(player)
 
 

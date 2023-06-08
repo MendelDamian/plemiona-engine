@@ -1,4 +1,5 @@
 from time import sleep
+from collections import OrderedDict
 
 from game import exceptions, models
 from plemiona_api.celery import app
@@ -26,3 +27,30 @@ def upgrade_building_task(player_id, building_name, seconds):
 
     GameSessionConsumerService.send_fetch_buildings(refreshed_player)
     GameSessionConsumerService.send_fetch_resources(refreshed_player)
+
+
+@app.task
+def train_units_task(player_id, units_to_train: list[OrderedDict]):
+    from game.units import UNITS
+    from game.services import GameSessionConsumerService
+
+    player = models.Player.objects.get(id=player_id)
+    player.village.are_units_training = True
+    player.village.save()
+
+    for unit in units_to_train:
+        unit_name, unit_count = unit["name"], unit["count"]
+
+        unit_trainig_time = UNITS[unit_name].get_training_time(1).total_seconds()
+
+        for _ in range(unit_count):
+            sleep(unit_trainig_time)
+
+            refreshed_player = models.Player.objects.get(id=player_id)
+            refreshed_player.village.increase_unit_count(unit_name, 1)
+
+            GameSessionConsumerService.send_fetch_units(refreshed_player)
+
+    refreshed_player = models.Player.objects.get(id=player_id)
+    refreshed_player.village.are_units_training = False
+    refreshed_player.village.save()
