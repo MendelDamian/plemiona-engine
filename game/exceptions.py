@@ -64,3 +64,8 @@ class BuildingUpgradeException(APIException):
 class UnitNotFoundException(APIException):
     status_code = 404
     default_detail = {"Unit": ["Unit not found."]}
+
+
+class UnitsAreAlreadyBeingTrainedException(APIException):
+    status_code = 400
+    default_detail = {"Units": ["Units are already being trained."]}

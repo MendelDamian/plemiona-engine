@@ -167,6 +167,9 @@ class VillageService:
         if not player.game_session.has_started:
             raise exceptions.GameSessionNotStartedException
 
+        if player.village.are_units_training:
+            raise exceptions.UnitsAreAlreadyBeingTrainedException
+
         accumulated_cost = {"wood": 0, "clay": 0, "iron": 0}
 
         for unit in units_to_train:
