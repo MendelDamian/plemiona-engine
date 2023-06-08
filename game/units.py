@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import ClassVar
+from typing import ClassVar, Optional
 
 
 class Unit:
@@ -24,17 +24,21 @@ class Unit:
     def __init__(self, count: int = 0):
         self.count = count
 
-    @property
-    def training_cost(self) -> dict:
+    def get_training_cost(self, unit_count: Optional[int] = None) -> dict[str, int]:
+        if unit_count is None:
+            unit_count = self.count
+
         return {
-            "wood": self.WOOD_COST * self.count,
-            "clay": self.CLAY_COST * self.count,
-            "iron": self.IRON_COST * self.count,
+            "wood": self.WOOD_COST * unit_count,
+            "clay": self.CLAY_COST * unit_count,
+            "iron": self.IRON_COST * unit_count,
         }
 
-    @property
-    def training_time(self) -> timedelta:
-        return self.TRAINING_TIME * self.count
+    def get_training_time(self, unit_count: Optional[int] = None) -> timedelta:
+        if unit_count is None:
+            unit_count = self.count
+
+        return self.TRAINING_TIME * unit_count
 
     @property
     def carrying_capacity(self) -> int:
