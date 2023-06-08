@@ -11,6 +11,16 @@ class CreateGameSessionSerializer(serializers.Serializer):
     game_code = serializers.CharField(max_length=GameSession.GAME_CODE_LENGTH, required=False, allow_blank=True)
 
 
+class TrainUnitsSerializer(serializers.Serializer):
+    class UnitSerializer(serializers.Serializer):
+        name = serializers.ChoiceField(
+            choices=Village.UNIT_NAMES, required=True, error_messages={"invalid_choice": "Invalid unit name"}
+        )
+        amount = serializers.IntegerField(min_value=1, required=True)
+
+    units = UnitSerializer(many=True, required=True)
+
+
 class PlayerInLobbySerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
