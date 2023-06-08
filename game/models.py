@@ -21,6 +21,10 @@ class GameSession(BaseModel):
     has_started = models.BooleanField(default=False, null=False)
     ended_at = models.DateTimeField(null=True, default=None)
 
+    @property
+    def has_ended(self):
+        return timezone.now() >= self.ended_at
+
     def save(self, *args, **kwargs):
         if not self.game_code:
             self.generate_game_code()
