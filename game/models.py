@@ -125,7 +125,7 @@ class Village(BaseModel):
         return units.Archer(count=self.archer_count)
 
     @property
-    def units(self):
+    def units(self) -> dict[str, units.Unit]:
         return {
             "spearman": self.spearman,
             "swordman": self.swordsman,
