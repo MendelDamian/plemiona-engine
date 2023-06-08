@@ -106,3 +106,34 @@ class UnitsCountInVillageSerializer(serializers.Serializer):
             "axeman": {"count": instance.axeman_count},
             "archer": {"count": instance.archer_count},
         }
+
+
+class UnitSerializer(serializers.Serializer):
+    speed = serializers.IntegerField()
+    trainig_duration = serializers.IntegerField()
+    training_cost = serializers.DictField()
+    carrying_capacity = serializers.IntegerField()
+    offensive_strength = serializers.IntegerField()
+    defensive_strength = serializers.IntegerField()
+
+    def to_representation(self, instance: Unit):
+        return {
+            "speed": int(instance.SPEED.total_seconds()),
+            "trainigDuration": int(instance.TRAINING_TIME.total_seconds()),
+            "trainingCost": instance.get_training_cost(1),
+            "carryingCapacity": instance.CARRYING_CAPACITY,
+            "offensiveStrength": instance.OFFENSIVE_STRENGTH,
+            "defensiveStrength": instance.DEFENSIVE_STRENGTH,
+        }
+
+
+class UnitsInVillageSerializer(serializers.Serializer):
+    units = serializers.SerializerMethodField()
+
+    def get_units(self, instance: Village):
+        return {
+            "spearman": UnitSerializer(instance.spearman).data,
+            "swordsman": UnitSerializer(instance.swordsman).data,
+            "axeman": UnitSerializer(instance.axeman).data,
+            "archer": UnitSerializer(instance.archer).data,
+        }
