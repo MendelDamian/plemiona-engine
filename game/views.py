@@ -3,22 +3,21 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from game.serializers import CreateGameSessionSerializer
-from game.services import GameSessionService, VillageService
+from game import serializers, services
 
 
 class CreateJoinGameSessionView(APIView):
     permission_classes = []
 
     def post(self, request, *args, **kwargs):
-        serializer = CreateGameSessionSerializer(data=request.data)
+        serializer = serializers.CreateGameSessionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         nickname = serializer.validated_data["nickname"]
         game_code = serializer.validated_data.pop("game_code", None)
 
-        game_session = GameSessionService.get_or_create_game_session(game_code)
-        player = GameSessionService.join_game_session(game_session, nickname)
+        game_session = services.GameSessionService.get_or_create_game_session(game_code)
+        player = services.GameSessionService.join_game_session(game_session, nickname)
 
         refresh = RefreshToken.for_user(player)
         response_data = {
@@ -34,11 +33,20 @@ class CreateJoinGameSessionView(APIView):
 
 class StartGameSessionView(APIView):
     def post(self, request, *args, **kwargs):
-        GameSessionService.start_game_session(request.user)
+        services.GameSessionService.start_game_session(request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UpgradeBuildingView(APIView):
     def post(self, request, building_name, *args, **kwargs):
-        VillageService.upgrade_building(request.user, building_name)
+        services.VillageService.upgrade_building(request.user, building_name)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TrainUnitsView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = serializers.TrainUnitsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        services.VillageService.train_units(request.user, **serializer.validated_data)
         return Response(status=status.HTTP_204_NO_CONTENT)
