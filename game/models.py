@@ -115,12 +115,15 @@ class Village(BaseModel):
     def spearman(self):
         return units.Spearman(count=self.spearman_count)
 
+    @property
     def swordsman(self):
         return units.Swordsman(count=self.swordsman_count)
 
+    @property
     def axeman(self):
         return units.Axeman(count=self.axeman_count)
 
+    @property
     def archer(self):
         return units.Archer(count=self.archer_count)
 
