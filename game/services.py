@@ -140,9 +140,7 @@ class GameSessionService:
         tasks.send_leaderboard_task.delay(game_session.id, game_session_duration)
 
     @staticmethod
-    def end_game_session(game_session_id):
-        game_session = models.GameSession.objects.get(id=game_session_id)
-
+    def end_game_session(game_session):
         for task in game_session.task_set.all():
             if not task.has_ended:
                 app.control.revoke(task.task_id, terminate=True)

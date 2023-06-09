@@ -35,7 +35,9 @@ def upgrade_building_task(self, player_id, building_name, seconds):
 def send_leaderboard_task(game_session_id, seconds):
     sleep(seconds)
 
-    services.GameSessionService.end_game_session(game_session_id)
+    game_session = models.GameSession.objects.get(id=game_session_id)
+
+    services.GameSessionService.end_game_session(game_session)
 
 
 @app.task(bind=True)
