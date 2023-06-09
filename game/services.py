@@ -6,7 +6,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from plemiona_api.celery import app
 
-from game import exceptions, serializers, models, tasks, units, buildings
+from game import exceptions, serializers, models, tasks, units
 
 
 class GameSessionConsumerService:
