@@ -158,3 +158,13 @@ class Barracks(Building):
     BASE_WOOD_COST = 200
     BASE_CLAY_COST = 170
     BASE_IRON_COST = 90
+
+
+BUILDINGS = {
+    "town_hall": TownHall,
+    "warehouse": Warehouse,
+    "iron_mine": IronMine,
+    "clay_pit": ClayPit,
+    "sawmill": Sawmill,
+    "barracks": Barracks,
+}
