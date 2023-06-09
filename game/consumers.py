@@ -21,13 +21,14 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
             await self.close()
             return
 
-        self.has_game_session_ended = await self.get_has_game_session_ended()
+        self.has_game_session_started = await self.get_has_game_session_started()
+
+        if self.has_game_session_started:
+            self.has_game_session_ended = await self.get_has_game_session_ended()
 
         if self.has_game_session_ended:
             await self.close()
             return
-
-        self.has_game_session_started = await self.get_has_game_session_started()
 
         self.room_group_name = await self.get_room_group_name()
         self.player_channel_name = str(self.player.channel_name)
