@@ -1,4 +1,5 @@
 import random
+from math import sqrt, pow
 from typing import OrderedDict
 
 from django.utils import timezone
@@ -202,6 +203,42 @@ class VillageService:
 
         tasks.train_units_task.delay(player.id, units_to_train)
         GameSessionConsumerService.send_fetch_resources(player)
+
+    @staticmethod
+    def attack_player(attacker: models.Player, defender: models.Player, attacker_units: list[OrderedDict]):
+        if not attacker_units:
+            raise exceptions.InsufficientUnitsException
+
+        slowest_unit = None
+
+        attacker_units_dict = {}
+
+        for unit in attacker_units:
+            unit_name, unit_count = unit["name"], unit["count"]
+            current_unit = attacker.village.units[unit_name]
+            if current_unit.count < unit_count:
+                raise exceptions.InsufficientUnitsException
+            if not slowest_unit or current_unit.SPEED > slowest_unit.SPEED:
+                slowest_unit = current_unit
+
+            attacker_units_dict[unit_name] = unit_count
+
+        distance = sqrt(
+            pow(attacker.village.x - defender.village.x, 2) + pow(attacker.village.x - defender.village.x, 2)
+        )
+
+        attack_time = slowest_unit.get_speed(distance)
+        battle = models.Battle.objects.create(
+            attacker=attacker,
+            defender=defender,
+            battle_time=timezone.now() + attack_time,
+            attacker_spearman_count=attacker_units_dict.get("spearman", 0),
+            attacker_swordsman_count=attacker_units_dict.get("swordsman", 0),
+            attacker_axeman_count=attacker_units_dict.get("axeman", 0),
+            attacker_archer_count=attacker_units_dict.get("archer", 0),
+        )
+
+        tasks.attack_task.delay(battle.id)
 
 
 class CoordinateService:

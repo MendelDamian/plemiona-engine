@@ -1,7 +1,9 @@
 from time import sleep
 from collections import OrderedDict
 
-from game import exceptions, models, services
+from django.utils import timezone
+
+from game import exceptions, models, services, units
 from plemiona_api.celery import app
 
 
@@ -41,9 +43,6 @@ def end_game_task(game_session_id, seconds):
 
 @app.task(bind=True)
 def train_units_task(self, player_id, units_to_train: list[OrderedDict]):
-    from game.units import UNITS
-    from game.services import GameSessionConsumerService
-
     player = models.Player.objects.get(id=player_id)
     player.village.are_units_training = True
     player.village.save()
@@ -53,7 +52,7 @@ def train_units_task(self, player_id, units_to_train: list[OrderedDict]):
     for unit in units_to_train:
         unit_name, unit_count = unit["name"], unit["count"]
 
-        unit_trainig_time = UNITS[unit_name].get_training_time(1).total_seconds()
+        unit_trainig_time = units.UNITS[unit_name].get_training_time(1).total_seconds()
 
         for _ in range(unit_count):
             sleep(unit_trainig_time)
@@ -61,10 +60,104 @@ def train_units_task(self, player_id, units_to_train: list[OrderedDict]):
             refreshed_player = models.Player.objects.get(id=player_id)
             refreshed_player.village.increase_unit_count(unit_name, 1)
 
-            GameSessionConsumerService.send_fetch_units_count(refreshed_player)
+            services.GameSessionConsumerService.send_fetch_units_count(refreshed_player)
 
     refreshed_player = models.Player.objects.get(id=player_id)
     refreshed_player.village.are_units_training = False
     refreshed_player.village.save()
+
+    current_task.has_ended = True
+
+
+@app.task(bind=True)
+def attack_task(self, battle_id):
+    battle = models.Battle.objects.get(id=battle_id)
+    attack_time = (battle.battle_time - battle.start_time)
+
+    current_task = models.Task.objects.create(game_session=battle.attacker.game_session, task_id=self.request.id)
+
+    battle.attacker.village.spearman_count -= battle.attacker_spearman_count
+    battle.attacker.village.swordsman_count -= battle.attacker_swordsman_count
+    battle.attacker.village.axeman_count -= battle.attacker_axeman_count
+    battle.attacker.village.archer_count -= battle.attacker_archer_count
+
+    battle.attacker.village.save()
+    services.GameSessionConsumerService.send_fetch_units_count(battle.attacker)
+
+    sleep(attack_time.total_seconds())
+
+    refreshed_battle = models.Battle.objects.get(id=battle_id)
+    attacker = refreshed_battle.attacker
+    defender = refreshed_battle.defender
+
+    refreshed_battle.defender_spearman_count = defender.village.units["spearman"].count
+    refreshed_battle.defender_swordsman_count = defender.village.units["swordsman"].count
+    refreshed_battle.defender_axeman_count = defender.village.units["axeman"].count
+    refreshed_battle.defender_archer_count = defender.village.units["archer"].count
+
+    defender_strenght = sum([unit.get_defensive_strength() for unit in defender.village.units.values()])
+    defender_strenght *= models.Village.DEFENSIVE_BONUS + 1
+
+    attacker_strenght = sum([unit.get_offensive_strength() for unit in refreshed_battle.attacker_units.values()])
+
+    ratio = min(attacker_strenght, defender_strenght) / max(attacker_strenght, defender_strenght)
+    winner = attacker if attacker_strenght > defender_strenght else defender
+
+    if winner == attacker:
+        refreshed_battle.left_attacker_spearman_count = refreshed_battle.attacker_spearman_count * (1 - ratio)
+        refreshed_battle.left_attacker_swordsman_count = refreshed_battle.attacker_swordsman_count * (1 - ratio)
+        refreshed_battle.left_attacker_axeman_count = refreshed_battle.attacker_axeman_count * (1 - ratio)
+        refreshed_battle.left_attacker_archer_count = refreshed_battle.attacker_archer_count * (1 - ratio)
+
+        refreshed_battle.attacker_lost_morale = (models.Battle.BASE_MORALE_LOSS * (1 - ratio)) * 0.5
+        refreshed_battle.defender_lost_morale = models.Battle.BASE_MORALE_LOSS * ratio
+
+        attacker_capacity = sum(
+            [unit.get_carrying_capacity() for unit in refreshed_battle.left_attacker_units.values()])
+        refreshed_battle.plundered_wood = min(defender.village.wood, attacker_capacity)
+        refreshed_battle.plundered_clay = min(defender.village.clay, attacker_capacity)
+        refreshed_battle.plundered_iron = min(defender.village.iron, attacker_capacity)
+
+        defender.village.wood -= refreshed_battle.plundered_wood
+        defender.village.clay -= refreshed_battle.plundered_clay
+        defender.village.iron -= refreshed_battle.plundered_iron
+
+        defender.village.morale -= refreshed_battle.defender_lost_morale
+
+        # TODO: Send report via WS
+
+        defender.village.save()
+
+        refreshed_battle.return_time = timezone.now() + attack_time / 2
+    else:
+        refreshed_battle.left_defender_spearman_count = refreshed_battle.defender_spearman_count * (1 - ratio)
+        refreshed_battle.left_defender_swordsman_count = refreshed_battle.defender_swordsman_count * (1 - ratio)
+        refreshed_battle.left_defender_axeman_count = refreshed_battle.defender_axeman_count * (1 - ratio)
+        refreshed_battle.left_defender_archer_count = refreshed_battle.defender_archer_count * (1 - ratio)
+
+        refreshed_battle.attacker_lost_morale = models.Battle.BASE_MORALE_LOSS * ratio
+
+    refreshed_battle.save()
+
+    if attacker != winner:
+        current_task.has_ended = True
+        return
+
+    sleep(attack_time.total_seconds() / 2)
+
+    refreshed_attacker = models.Player.objects.get(id=refreshed_battle.attacker.id)
+    refreshed_attacker.village.spearman_count -= refreshed_battle.left_attacker_spearman_count
+    refreshed_attacker.village.swordsman_count -= refreshed_battle.left_attacker_swordsman_count
+    refreshed_attacker.village.axeman_count -= refreshed_battle.left_attacker_axeman_count
+    refreshed_attacker.village.archer_count -= refreshed_battle.left_attacker_archer_count
+
+    refreshed_attacker.village.add_resources(refreshed_battle.plundered_resources)
+
+    refreshed_attacker.village.save()
+
+    services.GameSessionConsumerService.send_fetch_units_count(refreshed_attacker)
+    services.GameSessionConsumerService.send_fetch_resources(refreshed_attacker)
+
+    # TODO: Send report for attacker via WS
 
     current_task.has_ended = True
