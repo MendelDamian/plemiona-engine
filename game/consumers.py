@@ -20,13 +20,6 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
             await self.close()
             return
 
-        if self.player.is_connected:
-            await self.close()
-            return
-
-        self.player.is_connected = True
-        await self.player.asave()
-
         self.room_group_name = await self.get_room_group_name()
         self.player_channel_name = str(self.player.channel_name)
 
@@ -40,9 +33,6 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
     async def disconnect(self, close_code):
         if not (self.room_group_name or self.player_channel_name):
             return
-
-        self.player.is_connected = False
-        await self.player.asave()
 
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         await self.channel_layer.group_discard(self.player_channel_name, self.channel_name)
