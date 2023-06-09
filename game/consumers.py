@@ -34,6 +34,12 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
 
         self.has_game_session_started = await self.get_has_game_session_started()
 
+        if not first_connection and self.has_game_session_started:
+            self.has_game_session_ended = await self.get_has_game_session_ended()
+
+        if self.has_game_session_ended:
+            return
+
         if self.has_game_session_started:
             await self.send_json(
                 {
