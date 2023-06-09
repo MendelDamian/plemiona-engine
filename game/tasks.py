@@ -1,7 +1,7 @@
 from time import sleep
 from collections import OrderedDict
 
-from game import exceptions, models
+from game import exceptions, models, services
 from plemiona_api.celery import app
 
 
@@ -33,18 +33,9 @@ def upgrade_building_task(self, player_id, building_name, seconds):
 
 @app.task
 def send_leaderboard_task(game_session_id, seconds):
-    from game.services import GameSessionConsumerService
-
     sleep(seconds)
 
-    game_session = models.GameSession.objects.get(id=game_session_id)
-
-    for task in game_session.task_set.all():
-        if not task.has_ended:
-            app.control.revoke(task.task_id, terminate=True)
-            task.has_ended = True
-
-    GameSessionConsumerService.send_fetch_leaderboard(game_session)
+    services.GameSessionService.end_game_session(game_session_id)
 
 
 @app.task(bind=True)

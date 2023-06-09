@@ -4,6 +4,7 @@ from typing import OrderedDict
 from django.utils import timezone
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from plemiona_api.celery import app
 
 from game import exceptions, serializers, models, tasks, units
 from game.models import Village
@@ -137,6 +138,17 @@ class GameSessionService:
 
         game_session_duration = game_session.DURATION.total_seconds()
         tasks.send_leaderboard_task.delay(game_session.id, game_session_duration)
+
+    @staticmethod
+    def end_game_session(game_session_id):
+        game_session = models.GameSession.objects.get(id=game_session_id)
+
+        for task in game_session.task_set.all():
+            if not task.has_ended:
+                app.control.revoke(task.task_id, terminate=True)
+                task.has_ended = True
+
+        GameSessionConsumerService.send_fetch_leaderboard(game_session)
 
 
 class VillageService:
