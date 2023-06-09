@@ -77,7 +77,6 @@ class Warehouse(Building):
 
 
 class Barracks(Building):
-    MAX_LEVEL = 15
     POINTS_PER_LEVEL = 30
 
     # Upgrade cost coefficients
