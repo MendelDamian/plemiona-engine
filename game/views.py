@@ -2,8 +2,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.shortcuts import get_object_or_404
 
-from game import serializers, services
+from game import serializers, services, models
 
 
 class CreateJoinGameSessionView(APIView):
@@ -45,9 +46,22 @@ class UpgradeBuildingView(APIView):
 
 class TrainUnitsView(APIView):
     def post(self, request, *args, **kwargs):
-        serializer = serializers.TrainUnitsSerializer(data=request.data)
+        serializer = serializers.UnitsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         units_to_train = serializer.validated_data["units"]
         services.VillageService.train_units(request.user, units_to_train=units_to_train)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AttackPlayerView(APIView):
+    def post(self, request, defender_id, *args, **kwargs):
+        serializer = serializers.UnitsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        defender = get_object_or_404(models.Player, id=defender_id)
+        attacker_units = serializer.validated_data["units"]
+
+        services.VillageService.attack_player(request.user, defender, attacker_units)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
