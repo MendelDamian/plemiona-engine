@@ -74,7 +74,7 @@ class BuldingSerializer(serializers.Serializer):
         if village:
             upgrade_duration = village.get_building_upgrade_time(instance)
         else:
-            upgrade_duration = instance.get_upgrade_time().total_seconds()
+            upgrade_duration = instance.BASE_UPGRADE_TIME
 
         return {
             "level": instance.level,

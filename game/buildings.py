@@ -9,8 +9,7 @@ class Building:
     MAX_LEVEL: ClassVar[int] = 15
     POINTS_PER_LEVEL: ClassVar[int] = 1
 
-    # Multipliers
-    TIME_MULTIPLIER: ClassVar[float] = 1
+    # Upgrade time coefficients
     BASE_UPGRADE_TIME: ClassVar[timedelta] = timedelta(seconds=30)
     UPGRADE_TIME_FACTOR: ClassVar[float] = 1.2
 
@@ -31,9 +30,6 @@ class Building:
             "clay": self._get_upgrade_cost(self.CLAY_COST_FACTOR),
             "iron": self._get_upgrade_cost(self.IRON_COST_FACTOR),
         }
-
-    def get_upgrade_time(self) -> timedelta:
-        return self.BASE_UPGRADE_TIME * self.level * self.TIME_MULTIPLIER
 
     @property
     def points(self) -> int:
@@ -56,21 +52,17 @@ class Building:
 class TownHall(Building):
     POINTS_PER_LEVEL = 50
 
-    # Multipliers
-    TIME_MULTIPLIER = 1.2
-    UPGRADE_TIME_DISCOUNT = 1.05
-
     # Upgrade cost coefficients
     WOOD_COST_FACTOR = 71
     CLAY_COST_FACTOR = 63
     IRON_COST_FACTOR = 55
 
+    # UPGRADE_TIME_DISCOUNT ** (-town_hall.level)
+    UPGRADE_TIME_DISCOUNT = 1.05
+
 
 class Warehouse(Building):
     POINTS_PER_LEVEL = 30
-
-    # Multipliers
-    TIME_MULTIPLIER = 1.4
 
     # Upgrade cost coefficients
     WOOD_COST_FACTOR = 47
@@ -88,9 +80,6 @@ class Barracks(Building):
     MAX_LEVEL = 15
     POINTS_PER_LEVEL = 30
 
-    # Multipliers
-    TIME_MULTIPLIER = 5
-
     # Upgrade cost coefficients
     WOOD_COST_FACTOR = 159
     CLAY_COST_FACTOR = 133
@@ -100,9 +89,6 @@ class Barracks(Building):
 class ResourceBuilding(Building):
     POINTS_PER_LEVEL = 15
     BASE_UPGRADE_TIME = timedelta(seconds=15)
-
-    # Multipliers
-    TIME_MULTIPLIER = 1.3
 
     PRODUCTION_FACTOR: ClassVar[float] = 51.614  # per minute
     PRODUCTION_COEFF: ClassVar[float] = 0.15
