@@ -7,11 +7,12 @@ from game import exceptions
 
 class Building:
     MAX_LEVEL: ClassVar[int] = 15
-    BASE_UPGRADE_TIME: ClassVar[timedelta] = timedelta(seconds=30)
     POINTS_PER_LEVEL: ClassVar[int] = 1
 
     # Multipliers
     TIME_MULTIPLIER: ClassVar[float] = 1
+    BASE_UPGRADE_TIME: ClassVar[timedelta] = timedelta(seconds=30)
+    UPGRADE_TIME_FACTOR: ClassVar[float] = 1.2
 
     # Upgrade cost coefficients
     # a * math.exp(level * COST_COEFF)
@@ -57,6 +58,7 @@ class TownHall(Building):
 
     # Multipliers
     TIME_MULTIPLIER = 1.2
+    UPGRADE_TIME_DISCOUNT = 1.05
 
     # Upgrade cost coefficients
     WOOD_COST_FACTOR = 71
