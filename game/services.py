@@ -7,7 +7,6 @@ from channels.layers import get_channel_layer
 from plemiona_api.celery import app
 
 from game import exceptions, serializers, models, tasks, units
-from game.models import Village
 
 
 class GameSessionConsumerService:
@@ -17,6 +16,7 @@ class GameSessionConsumerService:
             "type": "start_game_session",
             "data": {
                 "players": serializers.PlayerDataSerializer(game_session.player_set.all(), many=True).data,
+                "endedAt": game_session.ended_at.isoformat(),
             },
         }
         GameSessionConsumerService._send_message(game_session.game_code, data)
@@ -152,14 +152,14 @@ class GameSessionService:
 class VillageService:
     @staticmethod
     def upgrade_building(player, building_name):
+        if building_name not in models.Village.BUILDING_NAMES:
+            raise exceptions.BuildingNotFoundException
+
         if not player.game_session.has_started:
             raise exceptions.GameSessionNotStartedException
 
         if player.game_session.has_ended:
             raise exceptions.GameSessionAlreadyEndedException
-
-        if building_name not in Village.BUILDING_NAMES:
-            raise exceptions.BuildingNotFoundException
 
         village = player.village
         village.update_resources()
@@ -171,7 +171,7 @@ class VillageService:
         upgrade_costs = building.get_upgrade_cost()
         village.charge_resources(upgrade_costs)
 
-        upgrade_time = building.get_upgrade_time().total_seconds()
+        upgrade_time = village.get_building_upgrade_time(building)
         tasks.upgrade_building_task.delay(player.id, building_name, upgrade_time)
         GameSessionConsumerService.send_fetch_resources(player)
 

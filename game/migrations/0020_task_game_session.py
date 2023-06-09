@@ -6,14 +6,14 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('game', '0018_task'),
+        ("game", "0019_task"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='task',
-            name='game_session',
-            field=models.ForeignKey(default=2, on_delete=django.db.models.deletion.CASCADE, to='game.gamesession'),
+            model_name="task",
+            name="game_session",
+            field=models.ForeignKey(default=2, on_delete=django.db.models.deletion.CASCADE, to="game.gamesession"),
             preserve_default=False,
         ),
     ]

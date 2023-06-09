@@ -6,7 +6,8 @@ from datetime import timedelta
 from django.db import models
 from django.utils import timezone
 
-from game import buildings, exceptions, units
+from game import exceptions, units
+from game.buildings import Building, TownHall, Warehouse, IronMine, ClayPit, Sawmill, Barracks
 from utils.models import BaseModel
 
 
@@ -56,7 +57,6 @@ class Player(BaseModel):
 
     nickname = models.CharField(max_length=NICKNAME_MAX_LENGTH, null=False)
     channel_name = models.UUIDField(default=uuid.uuid4, editable=False, null=False)
-    is_connected = models.BooleanField(default=False, null=False)
 
     game_session = models.ForeignKey("GameSession", on_delete=models.CASCADE, null=False)
     village = models.OneToOneField("Village", on_delete=models.CASCADE, null=False)
@@ -154,27 +154,27 @@ class Village(BaseModel):
 
     @property
     def town_hall(self):
-        return buildings.TownHall(level=self.town_hall_level)
+        return TownHall(level=self.town_hall_level)
 
     @property
     def warehouse(self):
-        return buildings.Warehouse(level=self.warehouse_level)
+        return Warehouse(level=self.warehouse_level)
 
     @property
     def iron_mine(self):
-        return buildings.IronMine(level=self.iron_mine_level)
+        return IronMine(level=self.iron_mine_level)
 
     @property
     def clay_pit(self):
-        return buildings.ClayPit(level=self.clay_pit_level)
+        return ClayPit(level=self.clay_pit_level)
 
     @property
     def sawmill(self):
-        return buildings.Sawmill(level=self.sawmill_level)
+        return Sawmill(level=self.sawmill_level)
 
     @property
     def barracks(self):
-        return buildings.Barracks(level=self.barracks_level)
+        return Barracks(level=self.barracks_level)
 
     @property
     def buildings(self):
@@ -277,6 +277,14 @@ class Village(BaseModel):
             raise exceptions.UnitNotFoundException
 
         self.save()
+
+    def get_building_upgrade_time(self, building: Building):
+        town_hall = self.town_hall
+        return (
+            building.BASE_UPGRADE_TIME
+            * (building.UPGRADE_TIME_FACTOR**building.level)
+            * (town_hall.UPGRADE_TIME_DISCOUNT ** (-town_hall.level))
+        ).total_seconds()
 
     def __str__(self):
         return f"Village {self.id}"

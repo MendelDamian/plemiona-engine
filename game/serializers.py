@@ -70,11 +70,17 @@ class BuldingSerializer(serializers.Serializer):
     upgrade_duration = serializers.IntegerField()
 
     def to_representation(self, instance: Building):
+        village = self.context.get("village")
+        if village:
+            upgrade_duration = village.get_building_upgrade_time(instance)
+        else:
+            upgrade_duration = instance.BASE_UPGRADE_TIME
+
         return {
             "level": instance.level,
             "maxLevel": instance.MAX_LEVEL,
             "upgradeCost": instance.get_upgrade_cost(),
-            "upgradeDuration": int(instance.get_upgrade_time().total_seconds()),
+            "upgradeDuration": int(upgrade_duration),
         }
 
 
@@ -87,12 +93,12 @@ class VillageSerializer(serializers.ModelSerializer):
 
     def get_buildings(self, instance: Village):
         return {
-            "townHall": BuldingSerializer(instance.town_hall).data,
-            "warehouse": BuldingSerializer(instance.warehouse).data,
-            "sawmill": BuldingSerializer(instance.sawmill).data,
-            "clayPit": BuldingSerializer(instance.clay_pit).data,
-            "ironMine": BuldingSerializer(instance.iron_mine).data,
-            "barracks": BuldingSerializer(instance.barracks).data,
+            "townHall": BuldingSerializer(instance.town_hall, context={"village": instance}).data,
+            "warehouse": BuldingSerializer(instance.warehouse, context={"village": instance}).data,
+            "sawmill": BuldingSerializer(instance.sawmill, context={"village": instance}).data,
+            "clayPit": BuldingSerializer(instance.clay_pit, context={"village": instance}).data,
+            "ironMine": BuldingSerializer(instance.iron_mine, context={"village": instance}).data,
+            "barracks": BuldingSerializer(instance.barracks, context={"village": instance}).data,
         }
 
 
