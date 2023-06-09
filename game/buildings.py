@@ -86,7 +86,7 @@ class Barracks(Building):
 
 
 class ResourceBuilding(Building):
-    POINTS_PER_LEVEL = 15
+    POINTS_PER_LEVEL = 20
     BASE_UPGRADE_TIME = timedelta(seconds=15)
 
     PRODUCTION_FACTOR: ClassVar[float] = 51.614  # per minute
