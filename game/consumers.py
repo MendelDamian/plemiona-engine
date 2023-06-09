@@ -97,6 +97,7 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
                     "data": {
                         "players": await self.get_players_in_game(),
                         "owner": await self.get_owner(),
+                        "endedAt": await self.get_game_session_ended_at(),
                         **await self.get_village(),
                         **await self.update_resources(),
                         **await self.get_units(),
@@ -147,6 +148,10 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def get_has_game_session_started(self):
         return self.player.game_session.has_started
+
+    @database_sync_to_async
+    def get_game_session_ended_at(self):
+        return self.player.game_session.ended_at.isoformat()
 
     @database_sync_to_async
     def get_players_in_game(self):

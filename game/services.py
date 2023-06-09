@@ -16,6 +16,7 @@ class GameSessionConsumerService:
             "type": "start_game_session",
             "data": {
                 "players": serializers.PlayerDataSerializer(game_session.player_set.all(), many=True).data,
+                "endedAt": game_session.ended_at.isoformat(),
             },
         }
         GameSessionConsumerService._send_message(game_session.game_code, data)
