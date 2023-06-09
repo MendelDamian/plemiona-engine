@@ -87,10 +87,11 @@ class Warehouse(Building):
 
 
 class ResourceBuilding(Building):
-    PRODUCTION_FACTOR: ClassVar[float] = 51.614
+    PRODUCTION_FACTOR: ClassVar[float] = 51.614  # per minute
     PRODUCTION_COEFF: ClassVar[float] = 0.15
 
     def get_production(self, seconds: float = 1.0) -> float:
+        # (PRODUCTION_FACTOR * math.exp(level * PRODUCTION_COEFF) / 60) -> per second
         return self.PRODUCTION_FACTOR * math.exp(self.level * self.PRODUCTION_COEFF) / 60 * seconds
 
 
