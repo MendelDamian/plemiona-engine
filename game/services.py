@@ -137,7 +137,7 @@ class GameSessionService:
             GameSessionConsumerService.send_fetch_units(player)
 
         game_session_duration = game_session.DURATION.total_seconds()
-        tasks.send_leaderboard_task.delay(game_session.id, game_session_duration)
+        tasks.end_game_task.delay(game_session.id, game_session_duration)
 
     @staticmethod
     def end_game_session(game_session):

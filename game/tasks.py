@@ -32,7 +32,7 @@ def upgrade_building_task(self, player_id, building_name, seconds):
 
 
 @app.task
-def send_leaderboard_task(game_session_id, seconds):
+def end_game_task(game_session_id, seconds):
     sleep(seconds)
 
     game_session = models.GameSession.objects.get(id=game_session_id)
