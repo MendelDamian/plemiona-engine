@@ -17,12 +17,15 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.player = self.scope.get("player", None)
         if not self.player:
+            await self.close()
             return
 
-        first_connection = not self.player.is_connected
-        if not self.player.is_connected:
-            self.player.is_connected = True
-            await self.player.asave()
+        if self.player.is_connected:
+            await self.close()
+            return
+
+        self.player.is_connected = True
+        await self.player.asave()
 
         self.room_group_name = await self.get_room_group_name()
         self.player_channel_name = str(self.player.channel_name)
@@ -32,44 +35,15 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
         await self.accept()
 
         self.has_game_session_started = await self.get_has_game_session_started()
-
-        if self.has_game_session_started:
-            await self.send_json(
-                {
-                    "type": "fetch_game_session_state",
-                    "data": {
-                        "players": await self.get_players_in_game(),
-                        "owner": await self.get_owner(),
-                        **await self.get_village(),
-                        **await self.update_resources(),
-                        **await self.get_units(),
-                    },
-                }
-            )
-        else:
-            players = await self.get_players_in_lobby()
-            owner = await self.get_owner()
-
-            data = {
-                "type": "players_list",
-                "data": {
-                    "owner": owner,
-                    "players": players,
-                },
-            }
-
-            if first_connection:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        "type": "send_message",
-                        "data": data,
-                    },
-                )
-            else:
-                await self.send_json(data)
+        await self._send_message_on_connect()
 
     async def disconnect(self, close_code):
+        if not (self.room_group_name or self.player_channel_name):
+            return
+
+        self.player.is_connected = False
+        await self.player.asave()
+
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         await self.channel_layer.group_discard(self.player_channel_name, self.channel_name)
 
@@ -114,6 +88,40 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
     async def send_message(self, event):
         # Should be called by group_send only
         await self.send_json(event["data"])
+
+    async def _send_message_on_connect(self):
+        if self.has_game_session_started:
+            await self.send_json(
+                {
+                    "type": "fetch_game_session_state",
+                    "data": {
+                        "players": await self.get_players_in_game(),
+                        "owner": await self.get_owner(),
+                        **await self.get_village(),
+                        **await self.update_resources(),
+                        **await self.get_units(),
+                    },
+                }
+            )
+        else:
+            players = await self.get_players_in_lobby()
+            owner = await self.get_owner()
+
+            data = {
+                "type": "players_list",
+                "data": {
+                    "owner": owner,
+                    "players": players,
+                },
+            }
+
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "send_message",
+                    "data": data,
+                },
+            )
 
     @database_sync_to_async
     def get_room_group_name(self):
