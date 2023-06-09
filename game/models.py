@@ -21,6 +21,10 @@ class GameSession(BaseModel):
     has_started = models.BooleanField(default=False, null=False)
     ended_at = models.DateTimeField(null=True, default=None)
 
+    @property
+    def has_ended(self):
+        return timezone.now() >= self.ended_at
+
     def save(self, *args, **kwargs):
         if not self.game_code:
             self.generate_game_code()
@@ -32,6 +36,18 @@ class GameSession(BaseModel):
 
     def __str__(self):
         return str(self.game_code)
+
+
+class Task(BaseModel):
+    TASK_ID_LENGTH = 36
+
+    task_id = models.CharField(max_length=TASK_ID_LENGTH, null=False)
+    has_ended = models.BooleanField(default=False, null=False)
+
+    game_session = models.ForeignKey("GameSession", on_delete=models.CASCADE, null=False)
+
+    def __str__(self):
+        return str(self.task_id)
 
 
 class Player(BaseModel):
