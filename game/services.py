@@ -4,6 +4,7 @@ from typing import OrderedDict
 from django.utils import timezone
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from plemiona_api.celery import app
 
 from game import exceptions, serializers, models, tasks, units, buildings
 
@@ -136,17 +137,29 @@ class GameSessionService:
             GameSessionConsumerService.send_fetch_units(player)
 
         game_session_duration = game_session.DURATION.total_seconds()
-        tasks.send_leaderboard_task.delay(game_session.id, game_session_duration)
+        tasks.end_game_task.delay(game_session.id, game_session_duration)
+
+    @staticmethod
+    def end_game_session(game_session):
+        for task in game_session.task_set.all():
+            if not task.has_ended:
+                app.control.revoke(task.task_id, terminate=True)
+                task.has_ended = True
+
+        GameSessionConsumerService.send_fetch_leaderboard(game_session)
 
 
 class VillageService:
     @staticmethod
     def upgrade_building(player, building_name):
+        if building_name not in models.Village.BUILDING_NAMES:
+            raise exceptions.BuildingNotFoundException
+
         if not player.game_session.has_started:
             raise exceptions.GameSessionNotStartedException
 
-        if building_name not in models.Village.BUILDING_NAMES:
-            raise exceptions.BuildingNotFoundException
+        if player.game_session.has_ended:
+            raise exceptions.GameSessionAlreadyEndedException
 
         village = player.village
         village.update_resources()
@@ -166,6 +179,9 @@ class VillageService:
     def train_units(player, units_to_train: list[OrderedDict]):
         if not player.game_session.has_started:
             raise exceptions.GameSessionNotStartedException
+
+        if player.game_session.has_ended:
+            raise exceptions.GameSessionAlreadyEndedException
 
         if player.village.are_units_training:
             raise exceptions.UnitsAreAlreadyBeingTrainedException

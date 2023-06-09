@@ -13,11 +13,20 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
         self.player: Optional[models.Player] = None
         self.player_channel_name: Optional[str] = None
         self.has_game_session_started: bool = False
+        self.has_game_session_ended: bool = False
 
     async def connect(self):
         self.player = self.scope.get("player", None)
         if not self.player:
             await self.close()
+            return
+
+        self.has_game_session_started = await self.get_has_game_session_started()
+
+        if self.has_game_session_started:
+            self.has_game_session_ended = await self.get_has_game_session_ended()
+
+        if self.has_game_session_ended:
             return
 
         self.room_group_name = await self.get_room_group_name()
@@ -27,7 +36,6 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_add(self.player_channel_name, self.channel_name)
         await self.accept()
 
-        self.has_game_session_started = await self.get_has_game_session_started()
         await self._send_message_on_connect()
 
     async def disconnect(self, close_code):
@@ -50,6 +58,12 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
 
             if not self.has_game_session_started:
                 return
+
+        if not self.has_game_session_ended:
+            self.has_game_session_ended = await self.get_has_game_session_ended()
+
+        if self.has_game_session_ended:
+            return
 
         if command_type == "fetch_resources":
             await self.send_json(
@@ -142,6 +156,10 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def get_game_session_ended_at(self):
         return self.player.game_session.ended_at.isoformat()
+
+    @database_sync_to_async
+    def get_has_game_session_ended(self):
+        return self.player.game_session.has_ended
 
     @database_sync_to_async
     def get_players_in_game(self):
