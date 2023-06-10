@@ -1,8 +1,10 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 
 from game import serializers, services, models
 
@@ -65,3 +67,11 @@ class AttackPlayerView(APIView):
         services.VillageService.attack_player(request.user, defender, attacker_units)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class BattleListView(ListAPIView):
+    serializer_class = serializers.BattleSerializer
+
+    def get_queryset(self):
+        player = self.request.user
+        return player.battles_as_attacker.all() | player.battles_as_defender.all()
