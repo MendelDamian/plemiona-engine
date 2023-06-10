@@ -148,7 +148,7 @@ class Village(BaseModel):
     def units(self) -> dict[str, units.Unit]:
         return {
             "spearman": self.spearman,
-            "swordman": self.swordsman,
+            "swordsman": self.swordsman,
             "axeman": self.axeman,
             "archer": self.archer,
         }

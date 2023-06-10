@@ -41,11 +41,11 @@ class Unit:
         return self.CARRYING_CAPACITY * self.count
 
     @property
-    def get_offensive_strength(self) -> int:
+    def offensive_strength(self) -> int:
         return self.OFFENSIVE_STRENGTH * self.count
 
     @property
-    def get_defensive_strength(self) -> int:
+    def defensive_strength(self) -> int:
         return self.DEFENSIVE_STRENGTH * self.count
 
     def get_speed(self, distance_in_fields: float) -> timedelta:
