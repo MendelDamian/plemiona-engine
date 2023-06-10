@@ -66,6 +66,16 @@ class GameSessionConsumerService:
         GameSessionConsumerService._send_message(game_session.game_code, data)
 
     @staticmethod
+    def inform_player(player: models.Player, message: str):
+        data = {
+            "type": "message",
+            "data": {
+                "message": message,
+            },
+        }
+        GameSessionConsumerService._send_message(player.channel_name, data)
+
+    @staticmethod
     def _send_message(channel_name, data):
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
@@ -251,8 +261,7 @@ class BattleService:
 
         battle.attacker.village.save()
         GameSessionConsumerService.send_fetch_units_count(battle.attacker)
-
-        # TODO: Send information to defender that opponent units are incoming
+        GameSessionConsumerService.inform_player(battle.defender, f"{battle.attacker.nickname}'s units are incoming!")
 
     @staticmethod
     def battle_phase(battle: models.Battle):
@@ -329,6 +338,7 @@ class BattleService:
 
         GameSessionConsumerService.send_fetch_units_count(battle.attacker)
         GameSessionConsumerService.send_fetch_resources(battle.attacker)
+        GameSessionConsumerService.inform_player(battle.attacker, "Your units returned from battle!")
 
 
 class CoordinateService:
