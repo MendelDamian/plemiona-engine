@@ -72,7 +72,7 @@ def train_units_task(self, player_id, units_to_train: list[OrderedDict]):
 @app.task(bind=True)
 def attack_task(self, battle_id):
     battle = models.Battle.objects.get(id=battle_id)
-    attack_time = (battle.battle_time - battle.start_time)
+    attack_time = battle.battle_time - battle.start_time
 
     current_task = models.Task.objects.create(game_session=battle.attacker.game_session, task_id=self.request.id)
 

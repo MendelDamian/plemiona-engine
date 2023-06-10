@@ -289,9 +289,9 @@ class Village(BaseModel):
     def get_building_upgrade_time(self, building: Building):
         town_hall = self.town_hall
         return (
-                building.BASE_UPGRADE_TIME
-                * (building.UPGRADE_TIME_FACTOR ** building.level)
-                * (town_hall.UPGRADE_TIME_DISCOUNT ** (-town_hall.level))
+            building.BASE_UPGRADE_TIME
+            * (building.UPGRADE_TIME_FACTOR**building.level)
+            * (town_hall.UPGRADE_TIME_DISCOUNT ** (-town_hall.level))
         ).total_seconds()
 
     def __str__(self):

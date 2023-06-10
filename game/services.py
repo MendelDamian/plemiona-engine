@@ -275,16 +275,14 @@ class BattleService:
 
         if winner == attacker:
             battle.left_attacker_spearman_count = int(battle.attacker_spearman_count * (1 - ratio))
-            battle.left_attacker_swordsman_count = int(
-                battle.attacker_swordsman_count * (1 - ratio))
+            battle.left_attacker_swordsman_count = int(battle.attacker_swordsman_count * (1 - ratio))
             battle.left_attacker_axeman_count = int(battle.attacker_axeman_count * (1 - ratio))
             battle.left_attacker_archer_count = int(battle.attacker_archer_count * (1 - ratio))
 
             battle.attacker_lost_morale = models.Battle.BASE_MORALE_LOSS * ratio * 0.5
             battle.defender_lost_morale = models.Battle.BASE_MORALE_LOSS * (1 - ratio)
 
-            attacker_capacity = sum(
-                [unit.get_carrying_capacity for unit in battle.left_attacker_units.values()])
+            attacker_capacity = sum([unit.get_carrying_capacity for unit in battle.left_attacker_units.values()])
 
             battle.plundered_wood = min(defender.village.wood, attacker_capacity)
             battle.plundered_clay = min(defender.village.clay, attacker_capacity)
@@ -294,12 +292,11 @@ class BattleService:
 
             defender.village.morale -= battle.defender_lost_morale
 
-            attack_time = (battle.battle_time - battle.start_time)
+            attack_time = battle.battle_time - battle.start_time
             battle.return_time = timezone.now() + attack_time / 2
         else:
             battle.left_defender_spearman_count = int(battle.defender_spearman_count * (1 - ratio))
-            battle.left_defender_swordsman_count = int(
-                battle.defender_swordsman_count * (1 - ratio))
+            battle.left_defender_swordsman_count = int(battle.defender_swordsman_count * (1 - ratio))
             battle.left_defender_axeman_count = int(battle.defender_axeman_count * (1 - ratio))
             battle.left_defender_archer_count = int(battle.defender_archer_count * (1 - ratio))
 
