@@ -1,8 +1,6 @@
 from time import sleep
 from collections import OrderedDict
 
-from django.utils import timezone
-
 from game import exceptions, models, services, units
 from plemiona_api.celery import app
 
@@ -31,6 +29,7 @@ def upgrade_building_task(self, player_id, building_name, seconds):
     GameSessionConsumerService.send_fetch_resources(refreshed_player)
 
     current_task.has_ended = True
+    current_task.save()
 
 
 @app.task
@@ -67,6 +66,7 @@ def train_units_task(self, player_id, units_to_train: list[OrderedDict]):
     refreshed_player.village.save()
 
     current_task.has_ended = True
+    current_task.save()
 
 
 @app.task(bind=True)
@@ -95,3 +95,4 @@ def attack_task(self, battle_id):
     services.BattleService.attacker_return(refreshed_attacker, refreshed_battle)
 
     current_task.has_ended = True
+    current_task.save()
