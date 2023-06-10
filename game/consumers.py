@@ -27,6 +27,7 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
             self.has_game_session_ended = await self.get_has_game_session_ended()
 
         if self.has_game_session_ended:
+            await self.close()
             return
 
         self.room_group_name = await self.get_room_group_name()
