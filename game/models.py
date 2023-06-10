@@ -348,12 +348,30 @@ class Battle(BaseModel):
         }
 
     @property
+    def defender_units(self):
+        return {
+            "spearman": units.Spearman(self.defender_spearman_count),
+            "swordsman": units.Swordsman(self.defender_swordsman_count),
+            "axeman": units.Axeman(self.defender_axeman_count),
+            "archer": units.Archer(self.defender_archer_count),
+        }
+
+    @property
     def left_attacker_units(self):
         return {
             "spearman": units.Spearman(self.left_attacker_spearman_count),
             "swordsman": units.Swordsman(self.left_attacker_swordsman_count),
             "axeman": units.Axeman(self.left_attacker_axeman_count),
             "archer": units.Archer(self.left_attacker_archer_count),
+        }
+
+    @property
+    def left_defender_units(self):
+        return {
+            "spearman": units.Spearman(self.left_defender_spearman_count),
+            "swordsman": units.Swordsman(self.left_defender_swordsman_count),
+            "axeman": units.Axeman(self.left_defender_axeman_count),
+            "archer": units.Archer(self.left_defender_archer_count),
         }
 
     @property
