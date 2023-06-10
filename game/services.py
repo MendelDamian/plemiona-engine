@@ -66,6 +66,16 @@ class GameSessionConsumerService:
         GameSessionConsumerService._send_message(game_session.game_code, data)
 
     @staticmethod
+    def send_morale(player: models.Player):
+        data = {
+            "type": "morale_change",
+            "data": {
+                "morale": player.village.morale,
+            },
+        }
+        GameSessionConsumerService._send_message(player.channel_name, data)
+
+    @staticmethod
     def inform_player(player: models.Player, message: str):
         data = {
             "type": "message",
@@ -320,8 +330,10 @@ class BattleService:
 
         defender.village.save()
 
+        GameSessionConsumerService.inform_player(defender, f"{attacker.nickname} has attacked you!")
         GameSessionConsumerService.send_fetch_units_count(defender)
         GameSessionConsumerService.send_fetch_resources(defender)
+        GameSessionConsumerService.send_morale(defender)
 
         return winner
 
@@ -331,14 +343,16 @@ class BattleService:
         battle.attacker.village.swordsman_count += battle.left_attacker_swordsman_count
         battle.attacker.village.axeman_count += battle.left_attacker_axeman_count
         battle.attacker.village.archer_count += battle.left_attacker_archer_count
+        battle.attacker.village.morale -= battle.attacker_lost_morale
         battle.attacker.village.save()
 
         battle.attacker.village.add_resources(battle.plundered_resources)
         battle.attacker.village.update_resources()
 
+        GameSessionConsumerService.inform_player(battle.attacker, "Your units returned from battle!")
         GameSessionConsumerService.send_fetch_units_count(battle.attacker)
         GameSessionConsumerService.send_fetch_resources(battle.attacker)
-        GameSessionConsumerService.inform_player(battle.attacker, "Your units returned from battle!")
+        GameSessionConsumerService.send_morale(battle.attacker)
 
 
 class CoordinateService:

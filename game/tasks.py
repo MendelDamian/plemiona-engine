@@ -78,8 +78,6 @@ def attack_task(self, battle_id):
 
     services.BattleService.attacker_preparations(battle)
 
-    # TODO: send morale
-
     sleep(attack_time.total_seconds())
 
     winner = services.BattleService.battle_phase(models.Battle.objects.get(id=battle_id))
