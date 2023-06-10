@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from game.buildings import Building
-from game.models import Player, Village, GameSession
+from game.models import Player, Village, GameSession, Battle
 from game.units import Unit
 
 
@@ -151,3 +151,50 @@ class PlayerResultsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
         fields = ("id", "nickname", "points")
+
+
+class BattleSerializer(serializers.ModelSerializer):
+    attacker = PlayerDataSerializer()
+    defender = PlayerDataSerializer()
+
+    start_time = serializers.DateTimeField()
+    battle_time = serializers.DateTimeField()
+    return_time = serializers.DateTimeField()
+
+    attacker_units = serializers.SerializerMethodField()
+    defender_units = serializers.SerializerMethodField()
+
+    left_attacker_units = serializers.SerializerMethodField()
+    left_defender_units = serializers.SerializerMethodField()
+
+    plundered_resources = serializers.DictField()
+
+    class Meta:
+        model = Battle
+        fields = (
+            "id",
+            "attacker",
+            "defender",
+            "start_time",
+            "battle_time",
+            "return_time",
+            "attacker_units",
+            "defender_units",
+            "left_attacker_units",
+            "left_defender_units",
+            "plundered_resources",
+            "attacker_lost_morale",
+            "defender_lost_morale",
+        )
+
+    def get_attacker_units(self, instance: Battle):
+        return {unit_name: unit.count for unit_name, unit in instance.attacker_units.items()}
+
+    def get_defender_units(self, instance: Battle):
+        return {unit_name: unit.count for unit_name, unit in instance.defender_units.items()}
+
+    def get_left_attacker_units(self, instance: Battle):
+        return {unit_name: unit.count for unit_name, unit in instance.left_attacker_units.items()}
+
+    def get_left_defender_units(self, instance: Battle):
+        return {unit_name: unit.count for unit_name, unit in instance.left_defender_units.items()}
