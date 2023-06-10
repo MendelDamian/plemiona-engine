@@ -224,7 +224,7 @@ class VillageService:
             attacker_units_dict[unit_name] = unit_count
 
         distance = sqrt(
-            pow(attacker.village.x - defender.village.x, 2) + pow(attacker.village.x - defender.village.x, 2)
+            pow(attacker.village.x - defender.village.x, 2) + pow(attacker.village.y - defender.village.y, 2)
         )
 
         attack_time = slowest_unit.get_speed(distance)
@@ -239,6 +239,98 @@ class VillageService:
         )
 
         tasks.attack_task.delay(battle.id)
+
+
+class BattleService:
+    @staticmethod
+    def attacker_preparations(battle: models.Battle):
+        battle.attacker.village.spearman_count -= battle.attacker_spearman_count
+        battle.attacker.village.swordsman_count -= battle.attacker_swordsman_count
+        battle.attacker.village.axeman_count -= battle.attacker_axeman_count
+        battle.attacker.village.archer_count -= battle.attacker_archer_count
+
+        battle.attacker.village.save()
+        GameSessionConsumerService.send_fetch_units_count(battle.attacker)
+
+        # TODO: Send information to defender that opponent units are incoming
+
+    @staticmethod
+    def battle_phase(battle: models.Battle):
+        defender = battle.defender
+        attacker = battle.attacker
+
+        battle.defender_spearman_count = defender.village.units["spearman"].count
+        battle.defender_swordsman_count = defender.village.units["swordsman"].count
+        battle.defender_axeman_count = defender.village.units["axeman"].count
+        battle.defender_archer_count = defender.village.units["archer"].count
+
+        defender_strenght = sum([unit.defensive_strength for unit in defender.village.units.values()])
+        defender_strenght *= models.Village.DEFENSIVE_BONUS + 1
+        attacker_strenght = sum([unit.offensive_strength for unit in battle.attacker_units.values()])
+
+        ratio = min(attacker_strenght, defender_strenght) / max(attacker_strenght, defender_strenght)
+        winner = attacker if attacker_strenght > defender_strenght else defender
+
+        defender.village.update_resources()
+
+        if winner == attacker:
+            battle.left_attacker_spearman_count = int(battle.attacker_spearman_count * (1 - ratio))
+            battle.left_attacker_swordsman_count = int(
+                battle.attacker_swordsman_count * (1 - ratio))
+            battle.left_attacker_axeman_count = int(battle.attacker_axeman_count * (1 - ratio))
+            battle.left_attacker_archer_count = int(battle.attacker_archer_count * (1 - ratio))
+
+            battle.attacker_lost_morale = models.Battle.BASE_MORALE_LOSS * ratio * 0.5
+            battle.defender_lost_morale = models.Battle.BASE_MORALE_LOSS * (1 - ratio)
+
+            attacker_capacity = sum(
+                [unit.get_carrying_capacity for unit in battle.left_attacker_units.values()])
+
+            battle.plundered_wood = min(defender.village.wood, attacker_capacity)
+            battle.plundered_clay = min(defender.village.clay, attacker_capacity)
+            battle.plundered_iron = min(defender.village.iron, attacker_capacity)
+
+            defender.village.charge_resources(battle.plundered_resources)
+
+            defender.village.morale -= battle.defender_lost_morale
+
+            attack_time = (battle.battle_time - battle.start_time)
+            battle.return_time = timezone.now() + attack_time / 2
+        else:
+            battle.left_defender_spearman_count = int(battle.defender_spearman_count * (1 - ratio))
+            battle.left_defender_swordsman_count = int(
+                battle.defender_swordsman_count * (1 - ratio))
+            battle.left_defender_axeman_count = int(battle.defender_axeman_count * (1 - ratio))
+            battle.left_defender_archer_count = int(battle.defender_archer_count * (1 - ratio))
+
+            battle.attacker_lost_morale = models.Battle.BASE_MORALE_LOSS * (1 - ratio)
+
+        battle.save()
+
+        defender.village.spearman_count = battle.left_defender_spearman_count
+        defender.village.swordsman_count = battle.left_defender_swordsman_count
+        defender.village.axeman_count = battle.left_defender_axeman_count
+        defender.village.archer_count = battle.left_defender_archer_count
+
+        defender.village.save()
+
+        GameSessionConsumerService.send_fetch_units_count(defender)
+        GameSessionConsumerService.send_fetch_resources(defender)
+
+        return winner
+
+    @staticmethod
+    def attacker_return(attacker: models.Player, battle: models.Battle):
+        attacker.village.spearman_count += battle.left_attacker_spearman_count
+        attacker.village.swordsman_count += battle.left_attacker_swordsman_count
+        attacker.village.axeman_count += battle.left_attacker_axeman_count
+        attacker.village.archer_count += battle.left_attacker_archer_count
+
+        attacker.village.add_resources(battle.plundered_resources)
+        attacker.village.update_resources()
+
+        GameSessionConsumerService.send_fetch_units_count(attacker)
+        GameSessionConsumerService.send_fetch_resources(attacker)
 
 
 class CoordinateService:
