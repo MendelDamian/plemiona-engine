@@ -78,21 +78,20 @@ def attack_task(self, battle_id):
 
     services.BattleService.attacker_preparations(battle)
 
+    # TODO: send morale
+
     sleep(attack_time.total_seconds())
 
-    refreshed_battle = models.Battle.objects.get(id=battle_id)
-    attacker = refreshed_battle.attacker
+    winner = services.BattleService.battle_phase(models.Battle.objects.get(id=battle_id))
 
-    winner = services.BattleService.battle_phase(battle)
-
-    if attacker != winner:
+    if battle.attacker != winner:
         current_task.has_ended = True
+        current_task.save()
         return
 
     sleep(attack_time.total_seconds() / 2)
 
-    refreshed_attacker = models.Player.objects.get(id=battle.attacker.id)
-    services.BattleService.attacker_return(refreshed_attacker, refreshed_battle)
+    services.BattleService.attacker_return(models.Battle.objects.get(id=battle_id))
 
     current_task.has_ended = True
     current_task.save()

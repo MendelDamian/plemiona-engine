@@ -317,17 +317,18 @@ class BattleService:
         return winner
 
     @staticmethod
-    def attacker_return(attacker: models.Player, battle: models.Battle):
-        attacker.village.spearman_count += battle.left_attacker_spearman_count
-        attacker.village.swordsman_count += battle.left_attacker_swordsman_count
-        attacker.village.axeman_count += battle.left_attacker_axeman_count
-        attacker.village.archer_count += battle.left_attacker_archer_count
+    def attacker_return(battle: models.Battle):
+        battle.attacker.village.spearman_count += battle.left_attacker_spearman_count
+        battle.attacker.village.swordsman_count += battle.left_attacker_swordsman_count
+        battle.attacker.village.axeman_count += battle.left_attacker_axeman_count
+        battle.attacker.village.archer_count += battle.left_attacker_archer_count
+        battle.attacker.village.save()
 
-        attacker.village.add_resources(battle.plundered_resources)
-        attacker.village.update_resources()
+        battle.attacker.village.add_resources(battle.plundered_resources)
+        battle.attacker.village.update_resources()
 
-        GameSessionConsumerService.send_fetch_units_count(attacker)
-        GameSessionConsumerService.send_fetch_resources(attacker)
+        GameSessionConsumerService.send_fetch_units_count(battle.attacker)
+        GameSessionConsumerService.send_fetch_resources(battle.attacker)
 
 
 class CoordinateService:
