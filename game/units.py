@@ -37,7 +37,7 @@ class Unit:
         return cls.TRAINING_TIME * unit_count
 
     @property
-    def carrying_capacity(self) -> int:
+    def get_carrying_capacity(self) -> int:
         return self.CARRYING_CAPACITY * self.count
 
     @property
@@ -48,7 +48,7 @@ class Unit:
     def defensive_strength(self) -> int:
         return self.DEFENSIVE_STRENGTH * self.count
 
-    def get_speed(self, distance_in_fields: int) -> timedelta:
+    def get_speed(self, distance_in_fields: float) -> timedelta:
         return self.SPEED * distance_in_fields
 
 

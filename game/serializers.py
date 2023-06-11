@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from game.buildings import Building
-from game.models import Player, Village, GameSession
+from game.models import Player, Village, GameSession, Battle
 from game.units import Unit
 
 
@@ -12,12 +12,12 @@ class CreateGameSessionSerializer(serializers.Serializer):
     game_code = serializers.CharField(max_length=GameSession.GAME_CODE_LENGTH, required=False, allow_blank=True)
 
 
-class TrainUnitsSerializer(serializers.Serializer):
+class UnitsSerializer(serializers.Serializer):
     class UnitSerializer(serializers.Serializer):
         name = serializers.ChoiceField(
             choices=Village.UNIT_NAMES, required=True, error_messages={"invalid_choice": "Invalid unit name"}
         )
-        count = serializers.IntegerField(min_value=1, required=True)
+        count = serializers.IntegerField(min_value=0, required=True)
 
     units = UnitSerializer(many=True, required=True)
 
@@ -116,7 +116,7 @@ class UnitsCountInVillageSerializer(serializers.Serializer):
 
 class UnitSerializer(serializers.Serializer):
     speed = serializers.IntegerField()
-    trainig_duration = serializers.IntegerField()
+    trainingDuration = serializers.IntegerField()
     training_cost = serializers.DictField()
     carrying_capacity = serializers.IntegerField()
     offensive_strength = serializers.IntegerField()
@@ -127,7 +127,7 @@ class UnitSerializer(serializers.Serializer):
         return {
             "count": instance.count,
             "speed": int(instance.SPEED.total_seconds()),
-            "trainigDuration": int(instance.TRAINING_TIME.total_seconds()),
+            "trainingDuration": int(instance.TRAINING_TIME.total_seconds()),
             "trainingCost": instance.get_training_cost(1),
             "carryingCapacity": instance.CARRYING_CAPACITY,
             "offensiveStrength": instance.OFFENSIVE_STRENGTH,
@@ -151,3 +151,52 @@ class PlayerResultsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
         fields = ("id", "nickname", "points")
+
+
+class BattleSerializer(serializers.ModelSerializer):
+    attacker = PlayerDataSerializer()
+    defender = PlayerDataSerializer()
+
+    start_time = serializers.DateTimeField()
+    battle_time = serializers.DateTimeField()
+    return_time = serializers.DateTimeField()
+
+    attacker_units = serializers.SerializerMethodField()
+    defender_units = serializers.SerializerMethodField()
+
+    left_attacker_units = serializers.SerializerMethodField()
+    left_defender_units = serializers.SerializerMethodField()
+
+    plundered_resources = serializers.DictField()
+
+    class Meta:
+        model = Battle
+        fields = (
+            "id",
+            "attacker",
+            "defender",
+            "start_time",
+            "battle_time",
+            "return_time",
+            "attacker_units",
+            "defender_units",
+            "left_attacker_units",
+            "left_defender_units",
+            "plundered_resources",
+            "attacker_lost_morale",
+            "defender_lost_morale",
+            "attacker_strenght",
+            "defender_strenght",
+        )
+
+    def get_attacker_units(self, instance: Battle):
+        return {unit_name: unit.count for unit_name, unit in instance.attacker_units.items()}
+
+    def get_defender_units(self, instance: Battle):
+        return {unit_name: unit.count for unit_name, unit in instance.defender_units.items()}
+
+    def get_left_attacker_units(self, instance: Battle):
+        return {unit_name: unit.count for unit_name, unit in instance.left_attacker_units.items()}
+
+    def get_left_defender_units(self, instance: Battle):
+        return {unit_name: unit.count for unit_name, unit in instance.left_defender_units.items()}

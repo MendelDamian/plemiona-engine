@@ -1,5 +1,10 @@
 # Plemiona API
 
+## Requirements
+
+- Python 3.9+
+- Redis
+
 ## Setting Up Development Environment
 
 Get redis: (https://redis.io/topics/quickstart)

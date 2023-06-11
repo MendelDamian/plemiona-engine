@@ -1,4 +1,5 @@
 import random
+from math import sqrt, pow
 from typing import OrderedDict
 
 from django.utils import timezone
@@ -63,6 +64,26 @@ class GameSessionConsumerService:
             },
         }
         GameSessionConsumerService._send_message(game_session.game_code, data)
+
+    @staticmethod
+    def send_morale(player: models.Player):
+        data = {
+            "type": "morale_change",
+            "data": {
+                "morale": player.village.morale,
+            },
+        }
+        GameSessionConsumerService._send_message(player.channel_name, data)
+
+    @staticmethod
+    def inform_player(player: models.Player, message: str):
+        data = {
+            "type": "message",
+            "data": {
+                "message": message,
+            },
+        }
+        GameSessionConsumerService._send_message(player.channel_name, data)
 
     @staticmethod
     def _send_message(channel_name, data):
@@ -187,14 +208,18 @@ class VillageService:
             raise exceptions.UnitsAreAlreadyBeingTrainedException
 
         accumulated_cost = {"wood": 0, "clay": 0, "iron": 0}
+        units_count = 0
 
         for unit in units_to_train:
             unit_name, unit_count = unit["name"], unit["count"]
+            training_cost = units.UNITS[unit_name].get_training_cost(unit_count)
+            units_count += unit_count
 
-            trainig_cost = units.UNITS[unit_name].get_training_cost(unit_count)
-
-            for resource_name, resource_cost in trainig_cost.items():
+            for resource_name, resource_cost in training_cost.items():
                 accumulated_cost[resource_name] += resource_cost
+
+        if units_count == 0:
+            raise exceptions.NoUnitsToTrainException
 
         village = player.village
         village.update_resources()
@@ -203,18 +228,157 @@ class VillageService:
         tasks.train_units_task.delay(player.id, units_to_train)
         GameSessionConsumerService.send_fetch_resources(player)
 
+    @staticmethod
+    def attack_player(attacker: models.Player, defender: models.Player, attacker_units: list[OrderedDict]):
+        slowest_unit = None
+        attacker_units_dict = {}
+
+        for unit in attacker_units:
+            unit_name, unit_count = unit["name"], unit["count"]
+            if unit_count <= 0:
+                continue
+
+            attacker_units_dict[unit_name] = unit_count
+            current_unit = attacker.village.units[unit_name]
+
+            if current_unit.count < unit_count:
+                raise exceptions.InsufficientUnitsException
+
+            if not slowest_unit or current_unit.SPEED > slowest_unit.SPEED:
+                slowest_unit = current_unit
+
+        if not slowest_unit:
+            raise exceptions.NoUnitsToAttackException
+
+        distance = sqrt(
+            pow(attacker.village.x - defender.village.x, 2) + pow(attacker.village.y - defender.village.y, 2)
+        )
+
+        attack_time = slowest_unit.get_speed(distance)
+        battle = models.Battle.objects.create(
+            attacker=attacker,
+            defender=defender,
+            battle_time=timezone.now() + attack_time,
+            attacker_spearman_count=attacker_units_dict.get("spearman", 0),
+            attacker_swordsman_count=attacker_units_dict.get("swordsman", 0),
+            attacker_axeman_count=attacker_units_dict.get("axeman", 0),
+            attacker_archer_count=attacker_units_dict.get("archer", 0),
+        )
+
+        tasks.attack_task.delay(battle.id)
+
+
+class BattleService:
+    @staticmethod
+    def attacker_preparations(battle: models.Battle):
+        battle.attacker.village.spearman_count -= battle.attacker_spearman_count
+        battle.attacker.village.swordsman_count -= battle.attacker_swordsman_count
+        battle.attacker.village.axeman_count -= battle.attacker_axeman_count
+        battle.attacker.village.archer_count -= battle.attacker_archer_count
+
+        battle.attacker.village.save()
+        GameSessionConsumerService.send_fetch_units_count(battle.attacker)
+        GameSessionConsumerService.inform_player(battle.defender, f"{battle.attacker.nickname}'s units are incoming!")
+
+    @staticmethod
+    def battle_phase(battle: models.Battle):
+        attacker = battle.attacker
+        defender = battle.defender
+        defender.village.update_resources()
+
+        battle.defender_spearman_count = defender.village.units["spearman"].count
+        battle.defender_swordsman_count = defender.village.units["swordsman"].count
+        battle.defender_axeman_count = defender.village.units["axeman"].count
+        battle.defender_archer_count = defender.village.units["archer"].count
+
+        battle.defender_strenght = 1 + sum([unit.defensive_strength for unit in defender.village.units.values()])
+        battle.defender_strenght *= models.Village.DEFENSIVE_BONUS
+        battle.attacker_strenght = sum([unit.offensive_strength for unit in battle.attacker_units.values()])
+
+        ratio = min(battle.attacker_strenght, battle.defender_strenght) / max(
+            battle.attacker_strenght, battle.defender_strenght
+        )
+
+        winner = attacker if battle.attacker_strenght > battle.defender_strenght else defender
+        if winner == attacker:
+            battle.left_attacker_spearman_count = round(battle.attacker_spearman_count * (1 - ratio))
+            battle.left_attacker_swordsman_count = round(battle.attacker_swordsman_count * (1 - ratio))
+            battle.left_attacker_axeman_count = round(battle.attacker_axeman_count * (1 - ratio))
+            battle.left_attacker_archer_count = round(battle.attacker_archer_count * (1 - ratio))
+
+            battle.attacker_lost_morale = models.Battle.BASE_MORALE_LOSS * ratio * 0.5
+            battle.defender_lost_morale = models.Battle.BASE_MORALE_LOSS * (1 - ratio)
+
+            attacker_capacity = sum([unit.get_carrying_capacity for unit in battle.left_attacker_units.values()])
+
+            battle.plundered_wood = min(defender.village.wood, attacker_capacity)
+            battle.plundered_clay = min(defender.village.clay, attacker_capacity)
+            battle.plundered_iron = min(defender.village.iron, attacker_capacity)
+
+            defender.village.charge_resources(battle.plundered_resources)
+
+            defender.village.morale -= battle.defender_lost_morale
+            attack_time = battle.battle_time - battle.start_time
+            battle.return_time = timezone.now() + attack_time / 2
+
+            GameSessionConsumerService.inform_player(
+                defender, f"You have lost the defense against {attacker.nickname}!"
+            )
+        else:
+            battle.left_defender_spearman_count = round(battle.defender_spearman_count * (1 - ratio))
+            battle.left_defender_swordsman_count = round(battle.defender_swordsman_count * (1 - ratio))
+            battle.left_defender_axeman_count = round(battle.defender_axeman_count * (1 - ratio))
+            battle.left_defender_archer_count = round(battle.defender_archer_count * (1 - ratio))
+
+            battle.attacker_lost_morale = models.Battle.BASE_MORALE_LOSS * (1 - ratio)
+
+            GameSessionConsumerService.inform_player(attacker, f"{defender.nickname} has defended himself!")
+            GameSessionConsumerService.inform_player(
+                defender, f"You have successfully defended yourself from {attacker.nickname}!"
+            )
+
+        battle.save()
+
+        defender.village.spearman_count = battle.left_defender_spearman_count
+        defender.village.swordsman_count = battle.left_defender_swordsman_count
+        defender.village.axeman_count = battle.left_defender_axeman_count
+        defender.village.archer_count = battle.left_defender_archer_count
+        defender.village.save()
+
+        GameSessionConsumerService.send_fetch_units_count(defender)
+        GameSessionConsumerService.send_fetch_resources(defender)
+        GameSessionConsumerService.send_morale(defender)
+
+        return winner
+
+    @staticmethod
+    def attacker_return(battle: models.Battle):
+        battle.attacker.village.spearman_count += battle.left_attacker_spearman_count
+        battle.attacker.village.swordsman_count += battle.left_attacker_swordsman_count
+        battle.attacker.village.axeman_count += battle.left_attacker_axeman_count
+        battle.attacker.village.archer_count += battle.left_attacker_archer_count
+        battle.attacker.village.morale -= battle.attacker_lost_morale
+        battle.attacker.village.save()
+
+        battle.attacker.village.add_resources(battle.plundered_resources)
+        battle.attacker.village.update_resources()
+
+        GameSessionConsumerService.inform_player(battle.attacker, "Your units returned from battle!")
+        GameSessionConsumerService.send_fetch_units_count(battle.attacker)
+        GameSessionConsumerService.send_fetch_resources(battle.attacker)
+        GameSessionConsumerService.send_morale(battle.attacker)
+
 
 class CoordinateService:
     AVAILABLE_TILES = (
-        (0, 0),
-        (0, 1),
-        (0, 2),
-        (0, 3),
-        (0, 4),
-        (0, 5),
-        (0, 6),
-        (0, 7),
-        # TODO: Fill rest when map will be ready
+        (3, 5),
+        (3, 11),
+        (9, 8),
+        (13, 9),
+        (11, 14),
+        (19, 9),
+        (17, 3),
+        (9, 2),
     )
 
     @staticmethod

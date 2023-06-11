@@ -83,6 +83,7 @@ class Player(BaseModel):
 
 class Village(BaseModel):
     MAX_MORALE = 100
+    DEFENSIVE_BONUS = 1.2
     BUILDING_NAMES = ("town_hall", "warehouse", "iron_mine", "clay_pit", "sawmill", "barracks")
     UNIT_NAMES = ("spearman", "swordsman", "axeman", "archer")
 
@@ -147,7 +148,7 @@ class Village(BaseModel):
     def units(self) -> dict[str, units.Unit]:
         return {
             "spearman": self.spearman,
-            "swordman": self.swordsman,
+            "swordsman": self.swordsman,
             "axeman": self.axeman,
             "archer": self.archer,
         }
@@ -228,6 +229,13 @@ class Village(BaseModel):
 
         self.save()
 
+    def add_resources(self, resources):
+        self.wood = min(self.wood + resources["wood"], self.warehouse.get_capacity())
+        self.iron = min(self.iron + resources["iron"], self.warehouse.get_capacity())
+        self.clay = min(self.clay + resources["clay"], self.warehouse.get_capacity())
+
+        self.save()
+
     def upgrade_building_level(self, building_name):
         if building_name == "town_hall":
             self.town_hall_level += 1
@@ -267,7 +275,7 @@ class Village(BaseModel):
     def increase_unit_count(self, unit_name, count):
         if unit_name == "spearman":
             self.spearman_count += count
-        elif unit_name == "swordman":
+        elif unit_name == "swordsman":
             self.swordsman_count += count
         elif unit_name == "axeman":
             self.axeman_count += count
@@ -288,3 +296,91 @@ class Village(BaseModel):
 
     def __str__(self):
         return f"Village {self.id}"
+
+
+class Battle(BaseModel):
+    BASE_MORALE_LOSS = 25
+
+    attacker = models.ForeignKey("Player", on_delete=models.CASCADE, null=False, related_name="battles_as_attacker")
+    defender = models.ForeignKey("Player", on_delete=models.CASCADE, null=False, related_name="battles_as_defender")
+
+    start_time = models.DateTimeField(auto_now_add=True)
+    battle_time = models.DateTimeField(null=False)
+    return_time = models.DateTimeField(null=True)
+
+    attacker_spearman_count = models.IntegerField(default=0, null=False)
+    attacker_swordsman_count = models.IntegerField(default=0, null=False)
+    attacker_axeman_count = models.IntegerField(default=0, null=False)
+    attacker_archer_count = models.IntegerField(default=0, null=False)
+
+    defender_spearman_count = models.IntegerField(default=0, null=False)
+    defender_swordsman_count = models.IntegerField(default=0, null=False)
+    defender_axeman_count = models.IntegerField(default=0, null=False)
+    defender_archer_count = models.IntegerField(default=0, null=False)
+
+    plundered_wood = models.FloatField(default=0, null=False)
+    plundered_clay = models.FloatField(default=0, null=False)
+    plundered_iron = models.FloatField(default=0, null=False)
+
+    left_attacker_spearman_count = models.IntegerField(default=0, null=False)
+    left_attacker_swordsman_count = models.IntegerField(default=0, null=False)
+    left_attacker_axeman_count = models.IntegerField(default=0, null=False)
+    left_attacker_archer_count = models.IntegerField(default=0, null=False)
+
+    left_defender_spearman_count = models.IntegerField(default=0, null=False)
+    left_defender_swordsman_count = models.IntegerField(default=0, null=False)
+    left_defender_axeman_count = models.IntegerField(default=0, null=False)
+    left_defender_archer_count = models.IntegerField(default=0, null=False)
+
+    attacker_lost_morale = models.IntegerField(default=0, null=False)
+    defender_lost_morale = models.IntegerField(default=0, null=False)
+
+    attacker_strenght = models.FloatField(default=0, null=False)
+    defender_strenght = models.FloatField(default=0, null=False)
+
+    class Meta:
+        unique_together = ("attacker", "defender")
+
+    @property
+    def attacker_units(self):
+        return {
+            "spearman": units.Spearman(self.attacker_spearman_count),
+            "swordsman": units.Swordsman(self.attacker_swordsman_count),
+            "axeman": units.Axeman(self.attacker_axeman_count),
+            "archer": units.Archer(self.attacker_archer_count),
+        }
+
+    @property
+    def defender_units(self):
+        return {
+            "spearman": units.Spearman(self.defender_spearman_count),
+            "swordsman": units.Swordsman(self.defender_swordsman_count),
+            "axeman": units.Axeman(self.defender_axeman_count),
+            "archer": units.Archer(self.defender_archer_count),
+        }
+
+    @property
+    def left_attacker_units(self):
+        return {
+            "spearman": units.Spearman(self.left_attacker_spearman_count),
+            "swordsman": units.Swordsman(self.left_attacker_swordsman_count),
+            "axeman": units.Axeman(self.left_attacker_axeman_count),
+            "archer": units.Archer(self.left_attacker_archer_count),
+        }
+
+    @property
+    def left_defender_units(self):
+        return {
+            "spearman": units.Spearman(self.left_defender_spearman_count),
+            "swordsman": units.Swordsman(self.left_defender_swordsman_count),
+            "axeman": units.Axeman(self.left_defender_axeman_count),
+            "archer": units.Archer(self.left_defender_archer_count),
+        }
+
+    @property
+    def plundered_resources(self):
+        return {
+            "wood": self.plundered_wood,
+            "clay": self.plundered_clay,
+            "iron": self.plundered_iron,
+        }

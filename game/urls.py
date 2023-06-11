@@ -9,4 +9,6 @@ urlpatterns = [
     path("start/", views.StartGameSessionView.as_view(), name="start_game_session"),
     path("building/<str:building_name>/upgrade/", views.UpgradeBuildingView.as_view(), name="upgrade_building"),
     path("train_units/", views.TrainUnitsView.as_view(), name="train_units"),
+    path("attack/<int:defender_id>/", views.AttackPlayerView.as_view(), name="attack_player"),
+    path("battles/", views.BattleListView.as_view(), name="battles"),
 ]
