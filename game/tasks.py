@@ -51,10 +51,10 @@ def train_units_task(self, player_id, units_to_train: list[OrderedDict]):
     for unit in units_to_train:
         unit_name, unit_count = unit["name"], unit["count"]
 
-        unit_trainig_time = units.UNITS[unit_name].get_training_time(1).total_seconds()
+        unit_training_time = units.UNITS[unit_name].get_training_time(1).total_seconds()
 
         for _ in range(unit_count):
-            sleep(unit_trainig_time)
+            sleep(unit_training_time)
 
             refreshed_player = models.Player.objects.get(id=player_id)
             refreshed_player.village.increase_unit_count(unit_name, 1)

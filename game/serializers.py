@@ -116,7 +116,7 @@ class UnitsCountInVillageSerializer(serializers.Serializer):
 
 class UnitSerializer(serializers.Serializer):
     speed = serializers.IntegerField()
-    trainig_duration = serializers.IntegerField()
+    trainingDuration = serializers.IntegerField()
     training_cost = serializers.DictField()
     carrying_capacity = serializers.IntegerField()
     offensive_strength = serializers.IntegerField()
@@ -127,7 +127,7 @@ class UnitSerializer(serializers.Serializer):
         return {
             "count": instance.count,
             "speed": int(instance.SPEED.total_seconds()),
-            "trainigDuration": int(instance.TRAINING_TIME.total_seconds()),
+            "trainingDuration": int(instance.TRAINING_TIME.total_seconds()),
             "trainingCost": instance.get_training_cost(1),
             "carryingCapacity": instance.CARRYING_CAPACITY,
             "offensiveStrength": instance.OFFENSIVE_STRENGTH,

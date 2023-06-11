@@ -212,9 +212,9 @@ class VillageService:
         for unit in units_to_train:
             unit_name, unit_count = unit["name"], unit["count"]
 
-            trainig_cost = units.UNITS[unit_name].get_training_cost(unit_count)
+            training_cost = units.UNITS[unit_name].get_training_cost(unit_count)
 
-            for resource_name, resource_cost in trainig_cost.items():
+            for resource_name, resource_cost in training_cost.items():
                 accumulated_cost[resource_name] += resource_cost
 
         village = player.village

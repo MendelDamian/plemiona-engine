@@ -275,7 +275,7 @@ class Village(BaseModel):
     def increase_unit_count(self, unit_name, count):
         if unit_name == "spearman":
             self.spearman_count += count
-        elif unit_name == "swordman":
+        elif unit_name == "swordsman":
             self.swordsman_count += count
         elif unit_name == "axeman":
             self.axeman_count += count
