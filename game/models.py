@@ -335,6 +335,9 @@ class Battle(BaseModel):
     attacker_lost_morale = models.IntegerField(default=0, null=False)
     defender_lost_morale = models.IntegerField(default=0, null=False)
 
+    attacker_strenght = models.FloatField(default=0, null=False)
+    defender_strenght = models.FloatField(default=0, null=False)
+
     class Meta:
         unique_together = ("attacker", "defender")
 

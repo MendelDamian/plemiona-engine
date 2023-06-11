@@ -282,28 +282,29 @@ class BattleService:
 
     @staticmethod
     def battle_phase(battle: models.Battle):
-        defender = battle.defender
         attacker = battle.attacker
+        defender = battle.defender
+        defender.village.update_resources()
 
         battle.defender_spearman_count = defender.village.units["spearman"].count
         battle.defender_swordsman_count = defender.village.units["swordsman"].count
         battle.defender_axeman_count = defender.village.units["axeman"].count
         battle.defender_archer_count = defender.village.units["archer"].count
 
-        defender_strenght = sum([unit.defensive_strength for unit in defender.village.units.values()])
-        defender_strenght *= models.Village.DEFENSIVE_BONUS + 1
-        attacker_strenght = sum([unit.offensive_strength for unit in battle.attacker_units.values()])
+        battle.defender_strenght = 1 + sum([unit.defensive_strength for unit in defender.village.units.values()])
+        battle.defender_strenght *= models.Village.DEFENSIVE_BONUS
+        battle.attacker_strenght = sum([unit.offensive_strength for unit in battle.attacker_units.values()])
 
-        ratio = min(attacker_strenght, defender_strenght) / max(attacker_strenght, defender_strenght)
-        winner = attacker if attacker_strenght > defender_strenght else defender
+        ratio = min(battle.attacker_strenght, battle.defender_strenght) / max(
+            battle.attacker_strenght, battle.defender_strenght
+        )
 
-        defender.village.update_resources()
-
+        winner = attacker if battle.attacker_strenght > battle.defender_strenght else defender
         if winner == attacker:
-            battle.left_attacker_spearman_count = int(battle.attacker_spearman_count * (1 - ratio))
-            battle.left_attacker_swordsman_count = int(battle.attacker_swordsman_count * (1 - ratio))
-            battle.left_attacker_axeman_count = int(battle.attacker_axeman_count * (1 - ratio))
-            battle.left_attacker_archer_count = int(battle.attacker_archer_count * (1 - ratio))
+            battle.left_attacker_spearman_count = round(battle.attacker_spearman_count * (1 - ratio))
+            battle.left_attacker_swordsman_count = round(battle.attacker_swordsman_count * (1 - ratio))
+            battle.left_attacker_axeman_count = round(battle.attacker_axeman_count * (1 - ratio))
+            battle.left_attacker_archer_count = round(battle.attacker_archer_count * (1 - ratio))
 
             battle.attacker_lost_morale = models.Battle.BASE_MORALE_LOSS * ratio * 0.5
             battle.defender_lost_morale = models.Battle.BASE_MORALE_LOSS * (1 - ratio)
@@ -320,12 +321,14 @@ class BattleService:
             attack_time = battle.battle_time - battle.start_time
             battle.return_time = timezone.now() + attack_time / 2
 
-            GameSessionConsumerService.inform_player(defender, f"{attacker.nickname} has attacked you!")
+            GameSessionConsumerService.inform_player(
+                defender, f"You have lost the defense against {attacker.nickname}!"
+            )
         else:
-            battle.left_defender_spearman_count = int(battle.defender_spearman_count * (1 - ratio))
-            battle.left_defender_swordsman_count = int(battle.defender_swordsman_count * (1 - ratio))
-            battle.left_defender_axeman_count = int(battle.defender_axeman_count * (1 - ratio))
-            battle.left_defender_archer_count = int(battle.defender_archer_count * (1 - ratio))
+            battle.left_defender_spearman_count = round(battle.defender_spearman_count * (1 - ratio))
+            battle.left_defender_swordsman_count = round(battle.defender_swordsman_count * (1 - ratio))
+            battle.left_defender_axeman_count = round(battle.defender_axeman_count * (1 - ratio))
+            battle.left_defender_archer_count = round(battle.defender_archer_count * (1 - ratio))
 
             battle.attacker_lost_morale = models.Battle.BASE_MORALE_LOSS * (1 - ratio)
 
@@ -340,7 +343,6 @@ class BattleService:
         defender.village.swordsman_count = battle.left_defender_swordsman_count
         defender.village.axeman_count = battle.left_defender_axeman_count
         defender.village.archer_count = battle.left_defender_archer_count
-
         defender.village.save()
 
         GameSessionConsumerService.send_fetch_units_count(defender)

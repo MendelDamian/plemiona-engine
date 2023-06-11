@@ -185,6 +185,8 @@ class BattleSerializer(serializers.ModelSerializer):
             "plundered_resources",
             "attacker_lost_morale",
             "defender_lost_morale",
+            "attacker_strenght",
+            "defender_strenght",
         )
 
     def get_attacker_units(self, instance: Battle):
