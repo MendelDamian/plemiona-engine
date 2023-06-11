@@ -211,7 +211,6 @@ class VillageService:
 
         for unit in units_to_train:
             unit_name, unit_count = unit["name"], unit["count"]
-
             training_cost = units.UNITS[unit_name].get_training_cost(unit_count)
 
             for resource_name, resource_cost in training_cost.items():
@@ -230,7 +229,6 @@ class VillageService:
             raise exceptions.InsufficientUnitsException
 
         slowest_unit = None
-
         attacker_units_dict = {}
 
         for unit in attacker_units:
@@ -310,7 +308,6 @@ class BattleService:
             defender.village.charge_resources(battle.plundered_resources)
 
             defender.village.morale -= battle.defender_lost_morale
-
             attack_time = battle.battle_time - battle.start_time
             battle.return_time = timezone.now() + attack_time / 2
         else:
@@ -320,6 +317,8 @@ class BattleService:
             battle.left_defender_archer_count = int(battle.defender_archer_count * (1 - ratio))
 
             battle.attacker_lost_morale = models.Battle.BASE_MORALE_LOSS * (1 - ratio)
+
+            GameSessionConsumerService.inform_player(attacker, f"{defender.nickname} has defended himself!")
 
         battle.save()
 
