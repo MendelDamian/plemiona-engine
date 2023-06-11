@@ -65,6 +65,8 @@ def train_units_task(self, player_id, units_to_train: list[OrderedDict]):
     refreshed_player.village.are_units_training = False
     refreshed_player.village.save()
 
+    services.GameSessionConsumerService.inform_player(refreshed_player, "Units training has ended")
+
     current_task.has_ended = True
     current_task.save()
 
