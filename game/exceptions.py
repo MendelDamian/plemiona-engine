@@ -66,6 +66,16 @@ class UnitNotFoundException(APIException):
     default_detail = {"Unit": ["Unit not found."]}
 
 
+class NoUnitsToTrainException(APIException):
+    status_code = 400
+    default_detail = {"Units": ["You did not specify any units to train."]}
+
+
+class NoUnitsToAttackException(APIException):
+    status_code = 400
+    default_detail = {"Units": ["You did not specify any units to attack with."]}
+
+
 class UnitsAreAlreadyBeingTrainedException(APIException):
     status_code = 400
     default_detail = {"Units": ["Units are already being trained."]}

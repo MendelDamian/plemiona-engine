@@ -208,13 +208,18 @@ class VillageService:
             raise exceptions.UnitsAreAlreadyBeingTrainedException
 
         accumulated_cost = {"wood": 0, "clay": 0, "iron": 0}
+        units_count = 0
 
         for unit in units_to_train:
             unit_name, unit_count = unit["name"], unit["count"]
             training_cost = units.UNITS[unit_name].get_training_cost(unit_count)
+            units_count += unit_count
 
             for resource_name, resource_cost in training_cost.items():
                 accumulated_cost[resource_name] += resource_cost
+
+        if units_count == 0:
+            raise exceptions.NoUnitsToTrainException
 
         village = player.village
         village.update_resources()
@@ -225,21 +230,25 @@ class VillageService:
 
     @staticmethod
     def attack_player(attacker: models.Player, defender: models.Player, attacker_units: list[OrderedDict]):
-        if not attacker_units:
-            raise exceptions.InsufficientUnitsException
-
         slowest_unit = None
         attacker_units_dict = {}
 
         for unit in attacker_units:
             unit_name, unit_count = unit["name"], unit["count"]
+            if unit_count <= 0:
+                continue
+
+            attacker_units_dict[unit_name] = unit_count
             current_unit = attacker.village.units[unit_name]
+
             if current_unit.count < unit_count:
                 raise exceptions.InsufficientUnitsException
+
             if not slowest_unit or current_unit.SPEED > slowest_unit.SPEED:
                 slowest_unit = current_unit
 
-            attacker_units_dict[unit_name] = unit_count
+        if not slowest_unit:
+            raise exceptions.NoUnitsToAttackException
 
         distance = sqrt(
             pow(attacker.village.x - defender.village.x, 2) + pow(attacker.village.y - defender.village.y, 2)
@@ -310,6 +319,8 @@ class BattleService:
             defender.village.morale -= battle.defender_lost_morale
             attack_time = battle.battle_time - battle.start_time
             battle.return_time = timezone.now() + attack_time / 2
+
+            GameSessionConsumerService.inform_player(defender, f"{attacker.nickname} has attacked you!")
         else:
             battle.left_defender_spearman_count = int(battle.defender_spearman_count * (1 - ratio))
             battle.left_defender_swordsman_count = int(battle.defender_swordsman_count * (1 - ratio))
@@ -319,6 +330,9 @@ class BattleService:
             battle.attacker_lost_morale = models.Battle.BASE_MORALE_LOSS * (1 - ratio)
 
             GameSessionConsumerService.inform_player(attacker, f"{defender.nickname} has defended himself!")
+            GameSessionConsumerService.inform_player(
+                defender, f"You have successfully defended yourself from {attacker.nickname}!"
+            )
 
         battle.save()
 
@@ -329,7 +343,6 @@ class BattleService:
 
         defender.village.save()
 
-        GameSessionConsumerService.inform_player(defender, f"{attacker.nickname} has attacked you!")
         GameSessionConsumerService.send_fetch_units_count(defender)
         GameSessionConsumerService.send_fetch_resources(defender)
         GameSessionConsumerService.send_morale(defender)
