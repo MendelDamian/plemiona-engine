@@ -371,15 +371,14 @@ class BattleService:
 
 class CoordinateService:
     AVAILABLE_TILES = (
-        (0, 0),
-        (0, 1),
-        (0, 2),
-        (0, 3),
-        (0, 4),
-        (0, 5),
-        (0, 6),
-        (0, 7),
-        # TODO: Fill rest when map will be ready
+        (3, 5),
+        (3, 11),
+        (9, 8),
+        (13, 9),
+        (11, 14),
+        (19, 9),
+        (17, 3),
+        (9, 2),
     )
 
     @staticmethod
