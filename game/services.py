@@ -230,6 +230,9 @@ class VillageService:
 
     @staticmethod
     def attack_player(attacker: models.Player, defender: models.Player, attacker_units: list[OrderedDict]):
+        if attacker == defender:
+            raise exceptions.CannotAttackYourselfException
+
         slowest_unit = None
         attacker_units_dict = {}
 

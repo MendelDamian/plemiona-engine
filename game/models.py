@@ -15,7 +15,7 @@ class GameSession(BaseModel):
     MINIMUM_PLAYERS = 2
     MAXIMUM_PLAYERS = 8
     GAME_CODE_LENGTH = 6
-    DURATION = timedelta(hours=1)
+    DURATION = timedelta(seconds=30)
 
     owner = models.OneToOneField("Player", on_delete=models.CASCADE, null=True, related_name="owned_game_session")
     game_code = models.CharField(max_length=GAME_CODE_LENGTH, null=False, unique=True, editable=False, db_index=True)
@@ -337,9 +337,6 @@ class Battle(BaseModel):
 
     attacker_strenght = models.FloatField(default=0, null=False)
     defender_strenght = models.FloatField(default=0, null=False)
-
-    class Meta:
-        unique_together = ("attacker", "defender")
 
     @property
     def attacker_units(self):

@@ -76,6 +76,11 @@ class NoUnitsToAttackException(APIException):
     default_detail = {"Units": ["You did not specify any units to attack with."]}
 
 
+class CannotAttackYourselfException(APIException):
+    status_code = 400
+    default_detail = {"Attack": ["You cannot attack yourself."]}
+
+
 class UnitsAreAlreadyBeingTrainedException(APIException):
     status_code = 400
     default_detail = {"Units": ["Units are already being trained."]}
