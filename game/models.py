@@ -338,9 +338,6 @@ class Battle(BaseModel):
     attacker_strenght = models.FloatField(default=0, null=False)
     defender_strenght = models.FloatField(default=0, null=False)
 
-    class Meta:
-        unique_together = ("attacker", "defender")
-
     @property
     def attacker_units(self):
         return {
