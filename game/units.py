@@ -53,7 +53,7 @@ class Unit:
 
 
 class Spearman(Unit):
-    SPEED = timedelta(seconds=18)
+    SPEED = timedelta(seconds=15)
     TRAINING_TIME = timedelta(seconds=5)
 
     WOOD_COST = 50
@@ -68,7 +68,7 @@ class Spearman(Unit):
 
 class Swordsman(Unit):
     SPEED = timedelta(seconds=22)
-    TRAINING_TIME = timedelta(seconds=7)
+    TRAINING_TIME = timedelta(seconds=8)
 
     WOOD_COST = 30
     CLAY_COST = 30
@@ -77,7 +77,7 @@ class Swordsman(Unit):
     CARRYING_CAPACITY = 15
 
     OFFENSIVE_STRENGTH = 25
-    DEFENSIVE_STRENGTH = 50
+    DEFENSIVE_STRENGTH = 25
 
 
 class Axeman(Unit):
