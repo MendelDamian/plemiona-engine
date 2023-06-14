@@ -1,10 +1,9 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.utils import timezone
 
 from game import serializers, services, models
 
@@ -69,9 +68,13 @@ class AttackPlayerView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class BattleListView(ListAPIView):
-    serializer_class = serializers.BattleSerializer
+class BattleListView(APIView):
+    def get(self, request, *args, **kwargs):
+        player = request.user
 
-    def get_queryset(self):
-        player = self.request.user
-        return player.battles_as_attacker.all() | player.battles_as_defender.all()
+        battle_reports_qs = player.battles_as_attacker.all() | player.battles_as_defender.all()
+        battle_reports = battle_reports_qs.filter(battle_time__lt=timezone.now()).order_by("-battle_time")[:5]
+
+        battle_serializer = serializers.BattleSerializer(battle_reports, many=True).data
+
+        return Response({"data": battle_serializer}, status=status.HTTP_200_OK)
