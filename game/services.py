@@ -157,8 +157,7 @@ class GameSessionService:
             GameSessionConsumerService.send_fetch_buildings(player)
             GameSessionConsumerService.send_fetch_units(player)
 
-        game_session_duration = game_session.DURATION.total_seconds()
-        tasks.end_game_task.delay(game_session.id, game_session_duration)
+        tasks.end_game_task.apply_async((game_session.id,), eta=game_session.ended_at)
 
     @staticmethod
     def end_game_session(game_session):
@@ -191,10 +190,11 @@ class VillageService:
         building = village.buildings[building_name]
         upgrade_costs = building.get_upgrade_cost()
         village.charge_resources(upgrade_costs)
+        village.set_building_upgrading_state(building_name, False)
+        GameSessionConsumerService.send_fetch_resources(player)
 
         upgrade_time = village.get_building_upgrade_time(building)
-        tasks.upgrade_building_task.delay(player.id, building_name, upgrade_time)
-        GameSessionConsumerService.send_fetch_resources(player)
+        tasks.upgrade_building_task.apply_async((player.id, building_name), countdown=upgrade_time)
 
     @staticmethod
     def train_units(player, units_to_train: list[OrderedDict]):
@@ -224,9 +224,21 @@ class VillageService:
         village = player.village
         village.update_resources()
         village.charge_resources(accumulated_cost)
-
-        tasks.train_units_task.delay(player.id, units_to_train)
         GameSessionConsumerService.send_fetch_resources(player)
+
+        finish_training_time = timezone.now()
+
+        for unit in units_to_train:
+            unit_name, unit_count = unit["name"], unit["count"]
+            training_time = units.UNITS[unit_name].get_training_time(1)
+
+            for _ in range(unit_count):
+                finish_training_time += training_time
+                tasks.train_unit_task.apply_async((player.id, unit_name), eta=finish_training_time)
+
+        tasks.send_delayed_message_task.apply_async(
+            (player.id, "Units are ready to be picked up!"), eta=finish_training_time
+        )
 
     @staticmethod
     def attack_player(attacker: models.Player, defender: models.Player, attacker_units: list[OrderedDict]):
@@ -268,12 +280,12 @@ class VillageService:
             attacker_archer_count=attacker_units_dict.get("archer", 0),
         )
 
-        tasks.attack_task.delay(battle.id)
+        BattleService.send_units(battle)
 
 
 class BattleService:
     @staticmethod
-    def attacker_preparations(battle: models.Battle):
+    def send_units(battle: models.Battle):
         battle.attacker.village.spearman_count -= battle.attacker_spearman_count
         battle.attacker.village.swordsman_count -= battle.attacker_swordsman_count
         battle.attacker.village.axeman_count -= battle.attacker_axeman_count
@@ -282,6 +294,8 @@ class BattleService:
         battle.attacker.village.save()
         GameSessionConsumerService.send_fetch_units_count(battle.attacker)
         GameSessionConsumerService.inform_player(battle.defender, f"{battle.attacker.nickname}'s units are incoming!")
+
+        tasks.attack_task.apply_async((battle.id,), eta=battle.battle_time)
 
     @staticmethod
     def battle_phase(battle: models.Battle):
@@ -352,7 +366,8 @@ class BattleService:
         GameSessionConsumerService.send_fetch_resources(defender)
         GameSessionConsumerService.send_morale(defender)
 
-        return winner
+        if winner == attacker:
+            tasks.return_units_task.apply_async((battle.id,), eta=battle.return_time)
 
     @staticmethod
     def attacker_return(battle: models.Battle):

@@ -1,97 +1,45 @@
-from time import sleep
-from collections import OrderedDict
-
-from game import exceptions, models, services, units
+from game import models, services
 from plemiona_api.celery import app
 
 
-@app.task(bind=True)
-def upgrade_building_task(self, player_id, building_name, seconds):
-    from game.services import GameSessionConsumerService
-
-    if building_name not in models.Village.BUILDING_NAMES:
-        raise exceptions.BuildingNotFoundException
-
+@app.task
+def upgrade_building_task(player_id, building_name):
     player = models.Player.objects.get(id=player_id)
-    player.village.set_building_upgrading_state(building_name, True)
 
-    current_task = models.Task.objects.create(game_session=player.game_session, task_id=self.request.id)
+    player.village.upgrade_building_level(building_name)
+    player.village.set_building_upgrading_state(building_name, False)
 
-    sleep(seconds)
-
-    refreshed_player = models.Player.objects.get(id=player_id)
-    refreshed_player.village.update_resources()
-
-    refreshed_player.village.upgrade_building_level(building_name)
-    refreshed_player.village.set_building_upgrading_state(building_name, False)
-
-    GameSessionConsumerService.send_fetch_buildings(refreshed_player)
-    GameSessionConsumerService.send_fetch_resources(refreshed_player)
-
-    current_task.has_ended = True
-    current_task.save()
+    services.GameSessionConsumerService.send_fetch_buildings(player)
+    services.GameSessionConsumerService.send_fetch_resources(player)
+    services.GameSessionConsumerService.inform_player(
+        player, f"{building_name.replace('_', '').title()} has been upgraded"
+    )
 
 
 @app.task
-def end_game_task(game_session_id, seconds):
-    sleep(seconds)
-
+def end_game_task(game_session_id):
     game_session = models.GameSession.objects.get(id=game_session_id)
     services.GameSessionService.end_game_session(game_session)
 
 
-@app.task(bind=True)
-def train_units_task(self, player_id, units_to_train: list[OrderedDict]):
+@app.task
+def train_unit_task(player_id, unit_name):
     player = models.Player.objects.get(id=player_id)
-    player.village.are_units_training = True
-    player.village.save()
-
-    current_task = models.Task.objects.create(game_session=player.game_session, task_id=self.request.id)
-
-    for unit in units_to_train:
-        unit_name, unit_count = unit["name"], unit["count"]
-
-        unit_training_time = units.UNITS[unit_name].get_training_time(1).total_seconds()
-
-        for _ in range(unit_count):
-            sleep(unit_training_time)
-
-            refreshed_player = models.Player.objects.get(id=player_id)
-            refreshed_player.village.increase_unit_count(unit_name, 1)
-
-            services.GameSessionConsumerService.send_fetch_units_count(refreshed_player)
-
-    refreshed_player = models.Player.objects.get(id=player_id)
-    refreshed_player.village.are_units_training = False
-    refreshed_player.village.save()
-
-    services.GameSessionConsumerService.inform_player(refreshed_player, "Units training has ended")
-
-    current_task.has_ended = True
-    current_task.save()
+    player.village.increase_unit_count(unit_name, 1)
+    services.GameSessionConsumerService.send_fetch_units_count(player)
 
 
-@app.task(bind=True)
-def attack_task(self, battle_id):
+@app.task
+def attack_task(battle_id):
     battle = models.Battle.objects.get(id=battle_id)
-    attack_time = battle.battle_time - battle.start_time
+    services.BattleService.battle_phase(battle)
 
-    current_task = models.Task.objects.create(game_session=battle.attacker.game_session, task_id=self.request.id)
 
-    services.BattleService.attacker_preparations(battle)
-
-    sleep(attack_time.total_seconds())
-
-    winner = services.BattleService.battle_phase(models.Battle.objects.get(id=battle_id))
-
-    if battle.attacker != winner:
-        current_task.has_ended = True
-        current_task.save()
-        return
-
-    sleep(attack_time.total_seconds() / 2)
-
+@app.task
+def return_units_task(battle_id):
     services.BattleService.attacker_return(models.Battle.objects.get(id=battle_id))
 
-    current_task.has_ended = True
-    current_task.save()
+
+@app.task
+def send_delayed_message_task(player_id, message: str):
+    services.GameSessionConsumerService.inform_player(models.Player.objects.get(id=player_id), message)

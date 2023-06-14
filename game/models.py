@@ -286,7 +286,7 @@ class Village(BaseModel):
 
         self.save()
 
-    def get_building_upgrade_time(self, building: Building):
+    def get_building_upgrade_time(self, building: Building) -> float:
         town_hall = self.town_hall
         return (
             building.BASE_UPGRADE_TIME
