@@ -72,8 +72,8 @@ class BattleListView(APIView):
     def get(self, request, *args, **kwargs):
         player = request.user
 
-        battle_reports_qs = player.battles_as_attacker.all() | player.battles_as_defender.all()
-        battle_reports = battle_reports_qs.filter(battle_time__lt=timezone.now()).order_by("-battle_time")[:5]
+        battle_reports = player.battles_as_attacker.all() | player.battles_as_defender.all()
+        battle_reports = battle_reports.filter(battle_time__lt=timezone.now()).order_by("-battle_time")[:5]
 
         battle_serializer = serializers.BattleSerializer(battle_reports, many=True).data
 
