@@ -191,10 +191,11 @@ class VillageService:
         building = village.buildings[building_name]
         upgrade_costs = building.get_upgrade_cost()
         village.charge_resources(upgrade_costs)
+        village.set_building_upgrading_state(building_name, False)
+        GameSessionConsumerService.send_fetch_resources(player)
 
         upgrade_time = village.get_building_upgrade_time(building)
-        tasks.upgrade_building_task.delay(player.id, building_name, upgrade_time)
-        GameSessionConsumerService.send_fetch_resources(player)
+        tasks.upgrade_building_task.apply_async((player.id, building_name), countdown=upgrade_time)
 
     @staticmethod
     def train_units(player, units_to_train: list[OrderedDict]):

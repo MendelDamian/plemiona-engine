@@ -1,35 +1,19 @@
 from time import sleep
-from collections import OrderedDict
 
-from game import exceptions, models, services, units
+from game import models, services
 from plemiona_api.celery import app
 
 
-@app.task(bind=True)
-def upgrade_building_task(self, player_id, building_name, seconds):
-    from game.services import GameSessionConsumerService
-
-    if building_name not in models.Village.BUILDING_NAMES:
-        raise exceptions.BuildingNotFoundException
-
+@app.task
+def upgrade_building_task(player_id, building_name):
     player = models.Player.objects.get(id=player_id)
-    player.village.set_building_upgrading_state(building_name, True)
 
-    current_task = models.Task.objects.create(game_session=player.game_session, task_id=self.request.id)
+    player.village.upgrade_building_level(building_name)
+    player.village.set_building_upgrading_state(building_name, False)
 
-    sleep(seconds)
-
-    refreshed_player = models.Player.objects.get(id=player_id)
-    refreshed_player.village.update_resources()
-
-    refreshed_player.village.upgrade_building_level(building_name)
-    refreshed_player.village.set_building_upgrading_state(building_name, False)
-
-    GameSessionConsumerService.send_fetch_buildings(refreshed_player)
-    GameSessionConsumerService.send_fetch_resources(refreshed_player)
-
-    current_task.has_ended = True
-    current_task.save()
+    services.GameSessionConsumerService.send_fetch_buildings(player)
+    services.GameSessionConsumerService.send_fetch_resources(player)
+    services.GameSessionConsumerService.inform_player(player, f"Building {building_name} has been upgraded")
 
 
 @app.task
