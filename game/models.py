@@ -57,6 +57,7 @@ class Player(BaseModel):
 
     nickname = models.CharField(max_length=NICKNAME_MAX_LENGTH, null=False)
     channel_name = models.UUIDField(default=uuid.uuid4, editable=False, null=False)
+    bonus_points = models.IntegerField(default=0, null=False)
 
     game_session = models.ForeignKey("GameSession", on_delete=models.CASCADE, null=False)
     village = models.OneToOneField("Village", on_delete=models.CASCADE, null=False)
@@ -68,7 +69,9 @@ class Player(BaseModel):
 
     @property
     def points(self):
-        return sum([building.points for _, building in self.village.buildings.items()])
+        building_points = sum([building.points for _, building in self.village.buildings.items()])
+        unit_points = sum([unit.points for _, unit in self.village.units.items()])
+        return building_points + unit_points
 
     def save(self, *args, **kwargs):
         # Check if the player has a village, avoid RelatedObjectDoesNotExist

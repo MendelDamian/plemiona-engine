@@ -3,6 +3,8 @@ from typing import ClassVar
 
 
 class Unit:
+    POINTS_PER_UNIT: ClassVar[int] = 1
+
     # time to travel one field
     SPEED: ClassVar[timedelta] = timedelta(seconds=1)
 
@@ -23,6 +25,10 @@ class Unit:
 
     def __init__(self, count: int = 0):
         self.count = count
+
+    @property
+    def points(self) -> int:
+        return self.count * self.POINTS_PER_UNIT
 
     @classmethod
     def get_training_cost(cls, unit_count: int) -> dict[str, int]:
@@ -53,6 +59,7 @@ class Unit:
 
 
 class Spearman(Unit):
+    POINTS_PER_UNIT = 3
     SPEED = timedelta(seconds=15)
     TRAINING_TIME = timedelta(seconds=5)
 
@@ -67,6 +74,7 @@ class Spearman(Unit):
 
 
 class Swordsman(Unit):
+    POINTS_PER_UNIT = 4
     SPEED = timedelta(seconds=22)
     TRAINING_TIME = timedelta(seconds=8)
 
@@ -81,6 +89,7 @@ class Swordsman(Unit):
 
 
 class Axeman(Unit):
+    POINTS_PER_UNIT = 5
     SPEED = timedelta(seconds=18)
     TRAINING_TIME = timedelta(seconds=7)
 
@@ -95,6 +104,7 @@ class Axeman(Unit):
 
 
 class Archer(Unit):
+    POINTS_PER_UNIT = 2
     SPEED = timedelta(seconds=18)
     TRAINING_TIME = timedelta(seconds=10)
 
