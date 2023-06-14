@@ -157,8 +157,7 @@ class GameSessionService:
             GameSessionConsumerService.send_fetch_buildings(player)
             GameSessionConsumerService.send_fetch_units(player)
 
-        game_session_duration = game_session.DURATION.total_seconds()
-        tasks.end_game_task.delay(game_session.id, game_session_duration)
+        tasks.end_game_task.apply_async((game_session.id,), eta=game_session.ended_at)
 
     @staticmethod
     def end_game_session(game_session):

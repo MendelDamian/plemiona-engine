@@ -17,9 +17,7 @@ def upgrade_building_task(player_id, building_name):
 
 
 @app.task
-def end_game_task(game_session_id, seconds):
-    sleep(seconds)
-
+def end_game_task(game_session_id):
     game_session = models.GameSession.objects.get(id=game_session_id)
     services.GameSessionService.end_game_session(game_session)
 
