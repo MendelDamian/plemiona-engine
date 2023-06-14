@@ -13,7 +13,9 @@ def upgrade_building_task(player_id, building_name):
 
     services.GameSessionConsumerService.send_fetch_buildings(player)
     services.GameSessionConsumerService.send_fetch_resources(player)
-    services.GameSessionConsumerService.inform_player(player, f"Building {building_name} has been upgraded")
+    services.GameSessionConsumerService.inform_player(
+        player, f"{building_name.replace('_', '').title()} has been upgraded"
+    )
 
 
 @app.task
