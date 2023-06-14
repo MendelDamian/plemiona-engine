@@ -1,5 +1,3 @@
-from time import sleep
-
 from game import models, services
 from plemiona_api.celery import app
 
