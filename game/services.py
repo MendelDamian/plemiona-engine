@@ -224,9 +224,21 @@ class VillageService:
         village = player.village
         village.update_resources()
         village.charge_resources(accumulated_cost)
-
-        tasks.train_units_task.delay(player.id, units_to_train)
         GameSessionConsumerService.send_fetch_resources(player)
+
+        finish_training_time = timezone.now()
+
+        for unit in units_to_train:
+            unit_name, unit_count = unit["name"], unit["count"]
+            training_time = units.UNITS[unit_name].get_training_time(1)
+
+            for _ in range(unit_count):
+                finish_training_time += training_time
+                tasks.train_unit_task.apply_async((player.id, unit_name), eta=finish_training_time)
+
+        tasks.send_delayed_message_task.apply_async(
+            (player.id, "Units are ready to be picked up!"), eta=finish_training_time
+        )
 
     @staticmethod
     def attack_player(attacker: models.Player, defender: models.Player, attacker_units: list[OrderedDict]):

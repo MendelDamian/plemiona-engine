@@ -40,35 +40,11 @@ def end_game_task(game_session_id, seconds):
     services.GameSessionService.end_game_session(game_session)
 
 
-@app.task(bind=True)
-def train_units_task(self, player_id, units_to_train: list[OrderedDict]):
+@app.task
+def train_unit_task(player_id, unit_name):
     player = models.Player.objects.get(id=player_id)
-    player.village.are_units_training = True
-    player.village.save()
-
-    current_task = models.Task.objects.create(game_session=player.game_session, task_id=self.request.id)
-
-    for unit in units_to_train:
-        unit_name, unit_count = unit["name"], unit["count"]
-
-        unit_training_time = units.UNITS[unit_name].get_training_time(1).total_seconds()
-
-        for _ in range(unit_count):
-            sleep(unit_training_time)
-
-            refreshed_player = models.Player.objects.get(id=player_id)
-            refreshed_player.village.increase_unit_count(unit_name, 1)
-
-            services.GameSessionConsumerService.send_fetch_units_count(refreshed_player)
-
-    refreshed_player = models.Player.objects.get(id=player_id)
-    refreshed_player.village.are_units_training = False
-    refreshed_player.village.save()
-
-    services.GameSessionConsumerService.inform_player(refreshed_player, "Units training has ended")
-
-    current_task.has_ended = True
-    current_task.save()
+    player.village.increase_unit_count(unit_name, 1)
+    services.GameSessionConsumerService.send_fetch_units_count(player)
 
 
 @app.task
@@ -80,3 +56,8 @@ def attack_task(battle_id):
 @app.task
 def return_units_task(battle_id):
     services.BattleService.attacker_return(models.Battle.objects.get(id=battle_id))
+
+
+@app.task
+def send_delayed_message_task(player_id, message: str):
+    services.GameSessionConsumerService.inform_player(models.Player.objects.get(id=player_id), message)
