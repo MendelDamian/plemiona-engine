@@ -268,12 +268,12 @@ class VillageService:
             attacker_archer_count=attacker_units_dict.get("archer", 0),
         )
 
-        tasks.attack_task.delay(battle.id)
+        BattleService.send_units(battle)
 
 
 class BattleService:
     @staticmethod
-    def attacker_preparations(battle: models.Battle):
+    def send_units(battle: models.Battle):
         battle.attacker.village.spearman_count -= battle.attacker_spearman_count
         battle.attacker.village.swordsman_count -= battle.attacker_swordsman_count
         battle.attacker.village.axeman_count -= battle.attacker_axeman_count
@@ -282,6 +282,8 @@ class BattleService:
         battle.attacker.village.save()
         GameSessionConsumerService.send_fetch_units_count(battle.attacker)
         GameSessionConsumerService.inform_player(battle.defender, f"{battle.attacker.nickname}'s units are incoming!")
+
+        tasks.attack_task.apply_async((battle.id,), eta=battle.battle_time)
 
     @staticmethod
     def battle_phase(battle: models.Battle):
@@ -352,7 +354,8 @@ class BattleService:
         GameSessionConsumerService.send_fetch_resources(defender)
         GameSessionConsumerService.send_morale(defender)
 
-        return winner
+        if winner == attacker:
+            tasks.return_units_task.apply_async((battle.id,), eta=battle.return_time)
 
     @staticmethod
     def attacker_return(battle: models.Battle):

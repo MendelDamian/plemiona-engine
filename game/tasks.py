@@ -71,27 +71,12 @@ def train_units_task(self, player_id, units_to_train: list[OrderedDict]):
     current_task.save()
 
 
-@app.task(bind=True)
-def attack_task(self, battle_id):
+@app.task
+def attack_task(battle_id):
     battle = models.Battle.objects.get(id=battle_id)
-    attack_time = battle.battle_time - battle.start_time
+    services.BattleService.battle_phase(battle)
 
-    current_task = models.Task.objects.create(game_session=battle.attacker.game_session, task_id=self.request.id)
 
-    services.BattleService.attacker_preparations(battle)
-
-    sleep(attack_time.total_seconds())
-
-    winner = services.BattleService.battle_phase(models.Battle.objects.get(id=battle_id))
-
-    if battle.attacker != winner:
-        current_task.has_ended = True
-        current_task.save()
-        return
-
-    sleep(attack_time.total_seconds() / 2)
-
+@app.task
+def return_units_task(battle_id):
     services.BattleService.attacker_return(models.Battle.objects.get(id=battle_id))
-
-    current_task.has_ended = True
-    current_task.save()
