@@ -76,6 +76,18 @@ class GameSessionConsumerService:
         GameSessionConsumerService._send_message(player.channel_name, data)
 
     @staticmethod
+    def send_battle_log(game_session: models.GameSession):
+        battles = game_session.battles.order_by("-start_time")[:10]
+
+        data = {
+            "type": "battle_log",
+            "data": {
+                "battle_log": serializers.BattleLogSerializer(battles, many=True).data,
+            },
+        }
+        GameSessionConsumerService._send_message(game_session.game_code, data)
+
+    @staticmethod
     def inform_player(player: models.Player, message: str):
         data = {
             "type": "message",
@@ -271,6 +283,7 @@ class VillageService:
 
         attack_time = slowest_unit.get_speed(distance)
         battle = models.Battle.objects.create(
+            game_session=attacker.game_session,
             attacker=attacker,
             defender=defender,
             battle_time=timezone.now() + attack_time,
@@ -294,6 +307,7 @@ class BattleService:
         battle.attacker.village.save()
         GameSessionConsumerService.send_fetch_units_count(battle.attacker)
         GameSessionConsumerService.inform_player(battle.defender, f"{battle.attacker.nickname}'s units are incoming!")
+        GameSessionConsumerService.send_battle_log(battle.attacker.game_session)
 
         tasks.attack_task.apply_async((battle.id,), eta=battle.battle_time)
 
@@ -368,6 +382,7 @@ class BattleService:
 
         if winner == attacker:
             tasks.return_units_task.apply_async((battle.id,), eta=battle.return_time)
+            GameSessionConsumerService.send_battle_log(battle.attacker.game_session)
 
     @staticmethod
     def attacker_return(battle: models.Battle):
