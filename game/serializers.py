@@ -213,9 +213,9 @@ class BattleLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Battle
         fields = (
-            'id',
-            'attacker',
-            'defender',
+            "id",
+            "attacker",
+            "defender",
             "start_time",
             "battle_time",
             "return_time",
