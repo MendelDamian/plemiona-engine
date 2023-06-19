@@ -68,7 +68,9 @@ class Player(BaseModel):
 
     @property
     def points(self):
-        return sum([building.points for _, building in self.village.buildings.items()])
+        building_points = sum([building.points for _, building in self.village.buildings.items()])
+        unit_points = sum([unit.points for _, unit in self.village.units.items()])
+        return building_points + unit_points + self.village.morale
 
     def save(self, *args, **kwargs):
         # Check if the player has a village, avoid RelatedObjectDoesNotExist
