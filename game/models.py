@@ -301,6 +301,9 @@ class Village(BaseModel):
 class Battle(BaseModel):
     BASE_MORALE_LOSS = 25
 
+    game_session = models.ForeignKey(
+        "GameSession", on_delete=models.CASCADE, null=True, db_index=True, related_name="battles"
+    )
     attacker = models.ForeignKey("Player", on_delete=models.CASCADE, null=False, related_name="battles_as_attacker")
     defender = models.ForeignKey("Player", on_delete=models.CASCADE, null=False, related_name="battles_as_defender")
 

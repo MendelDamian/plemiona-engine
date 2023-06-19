@@ -200,3 +200,23 @@ class BattleSerializer(serializers.ModelSerializer):
 
     def get_left_defender_units(self, instance: Battle):
         return {unit_name: unit.count for unit_name, unit in instance.left_defender_units.items()}
+
+
+class BattleLogSerializer(serializers.ModelSerializer):
+    attacker = PlayerDataSerializer()
+    defender = PlayerDataSerializer()
+
+    start_time = serializers.DateTimeField()
+    battle_time = serializers.DateTimeField()
+    return_time = serializers.DateTimeField()
+
+    class Meta:
+        model = Battle
+        fields = (
+            "id",
+            "attacker",
+            "defender",
+            "start_time",
+            "battle_time",
+            "return_time",
+        )
