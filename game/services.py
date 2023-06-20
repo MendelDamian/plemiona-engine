@@ -82,7 +82,7 @@ class GameSessionConsumerService:
         data = {
             "type": "battle_log",
             "data": {
-                "battle_log": serializers.BattleLogSerializer(battles, many=True).data,
+                "battleLog": serializers.BattleLogSerializer(battles, many=True).data,
             },
         }
         GameSessionConsumerService._send_message(game_session.game_code, data)

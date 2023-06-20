@@ -203,13 +203,6 @@ class BattleSerializer(serializers.ModelSerializer):
 
 
 class BattleLogSerializer(serializers.ModelSerializer):
-    attacker = PlayerDataSerializer()
-    defender = PlayerDataSerializer()
-
-    start_time = serializers.DateTimeField()
-    battle_time = serializers.DateTimeField()
-    return_time = serializers.DateTimeField()
-
     class Meta:
         model = Battle
         fields = (
@@ -220,3 +213,13 @@ class BattleLogSerializer(serializers.ModelSerializer):
             "battle_time",
             "return_time",
         )
+
+    def to_representation(self, instance):
+        return {
+            "id": instance.id,
+            "attacker": PlayerDataSerializer(instance.attacker).data,
+            "defender": PlayerDataSerializer(instance.defender).data,
+            "startTime": instance.start_time.isoformat() if instance.start_time else None,
+            "battleTime": instance.battle_time.isoformat() if instance.battle_time else None,
+            "returnTime": instance.return_time.isoformat() if instance.return_time else None,
+        }
