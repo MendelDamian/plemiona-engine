@@ -10,7 +10,7 @@ class Building:
     POINTS_PER_LEVEL: ClassVar[int] = 1
 
     # Upgrade time coefficients
-    BASE_UPGRADE_TIME: ClassVar[timedelta] = timedelta(seconds=30)
+    BASE_UPGRADE_TIME: ClassVar[timedelta] = timedelta(seconds=15)
     UPGRADE_TIME_FACTOR: ClassVar[float] = 1.2
 
     # Upgrade cost coefficients
@@ -58,7 +58,7 @@ class TownHall(Building):
     IRON_COST_FACTOR = 55
 
     # UPGRADE_TIME_DISCOUNT ** (-town_hall.level)
-    UPGRADE_TIME_DISCOUNT = 1.05
+    UPGRADE_TIME_DISCOUNT = 1.09
 
 
 class Warehouse(Building):
@@ -70,7 +70,7 @@ class Warehouse(Building):
     IRON_COST_FACTOR = 32
 
     # Capacity coefficient
-    CAPACITY_COEFF: ClassVar[float] = 813
+    CAPACITY_COEFF: ClassVar[float] = 300
 
     def get_capacity(self) -> int:
         return round(self.CAPACITY_COEFF * math.exp(self.level * Building.COST_COEFF) / 100) * 100
@@ -87,10 +87,10 @@ class Barracks(Building):
 
 class ResourceBuilding(Building):
     POINTS_PER_LEVEL = 20
-    BASE_UPGRADE_TIME = timedelta(seconds=15)
+    BASE_UPGRADE_TIME = timedelta(seconds=10)
 
-    PRODUCTION_FACTOR: ClassVar[float] = 51.614  # per minute
-    PRODUCTION_COEFF: ClassVar[float] = 0.15
+    PRODUCTION_FACTOR: ClassVar[float] = 150  # per minute
+    PRODUCTION_COEFF: ClassVar[float] = 0.22
 
     def get_production(self, seconds: float = 1.0) -> float:
         # (PRODUCTION_FACTOR * math.exp(level * PRODUCTION_COEFF) / 60) -> per second
