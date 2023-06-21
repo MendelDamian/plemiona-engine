@@ -73,7 +73,7 @@ class Warehouse(Building):
     CAPACITY_COEFF: ClassVar[float] = 300
 
     def get_capacity(self) -> int:
-        return round(self.CAPACITY_COEFF * math.exp(self.level * Building.COST_COEFF) / 100) * 100
+        return round(self.CAPACITY_COEFF * math.exp(self.level * Building.COST_COEFF) / 10) * 10
 
 
 class Barracks(Building):
