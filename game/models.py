@@ -303,6 +303,18 @@ class Village(BaseModel):
 class Battle(BaseModel):
     BASE_MORALE_LOSS = 25
 
+    class BattlePhase(models.TextChoices):
+        ONGOING = "O", "Ongoing"
+        RETURNING = "R", "Returning"
+        FINISHED = "F", "Finished"
+
+    class BattleResult(models.TextChoices):
+        WIN = "W", "Win"
+        LOSE = "L", "Lose"
+
+    phase = models.CharField(max_length=1, choices=BattlePhase.choices, default=BattlePhase.ONGOING)
+    result = models.CharField(max_length=1, choices=BattleResult.choices, null=True)
+
     game_session = models.ForeignKey(
         "GameSession", on_delete=models.CASCADE, null=True, db_index=True, related_name="battles"
     )
