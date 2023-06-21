@@ -226,4 +226,6 @@ class BattleLogSerializer(serializers.ModelSerializer):
             "startTime": instance.start_time.isoformat() if instance.start_time else None,
             "battleTime": instance.battle_time.isoformat() if instance.battle_time else None,
             "returnTime": instance.return_time.isoformat() if instance.return_time else None,
+            "phase": instance.phase,
+            "result": instance.result,
         }
