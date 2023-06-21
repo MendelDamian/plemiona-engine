@@ -200,6 +200,8 @@ class VillageService:
             raise exceptions.BuildingUpgradeException
 
         building = village.buildings[building_name]
+        building.validate_upgrade()
+
         upgrade_costs = building.get_upgrade_cost()
         village.charge_resources(upgrade_costs)
         village.set_building_upgrading_state(building_name, False)
