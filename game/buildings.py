@@ -35,10 +35,12 @@ class Building:
     def points(self) -> int:
         return self.level * self.POINTS_PER_LEVEL
 
-    def upgrade(self) -> None:
-        if self.level < self.MAX_LEVEL:
-            self.level += 1
-        else:
+    def validate_upgrade(self) -> None:
+        """
+        Checks if the building can be upgraded by validating its current level.
+        Raises BuildingMaxLevelException if the building is already at its maximum level.
+        """
+        if self.level >= self.MAX_LEVEL:
             raise exceptions.BuildingMaxLevelException
 
     def downgrade(self) -> None:
