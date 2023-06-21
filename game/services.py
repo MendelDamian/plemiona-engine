@@ -168,6 +168,7 @@ class GameSessionService:
             GameSessionConsumerService.send_fetch_resources(player)
             GameSessionConsumerService.send_fetch_buildings(player)
             GameSessionConsumerService.send_fetch_units(player)
+            GameSessionConsumerService.send_morale(player)
 
         tasks.end_game_task.apply_async((game_session.id,), eta=game_session.ended_at)
 
