@@ -187,6 +187,8 @@ class BattleSerializer(serializers.ModelSerializer):
             "defender_lost_morale",
             "attacker_strenght",
             "defender_strenght",
+            "phase",
+            "result",
         )
 
     def get_attacker_units(self, instance: Battle):
@@ -212,6 +214,8 @@ class BattleLogSerializer(serializers.ModelSerializer):
             "start_time",
             "battle_time",
             "return_time",
+            "phase",
+            "result",
         )
 
     def to_representation(self, instance):
