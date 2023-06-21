@@ -89,8 +89,8 @@ class ResourceBuilding(Building):
     POINTS_PER_LEVEL = 20
     BASE_UPGRADE_TIME = timedelta(seconds=10)
 
-    PRODUCTION_FACTOR: ClassVar[float] = 150  # per minute
-    PRODUCTION_COEFF: ClassVar[float] = 0.22
+    PRODUCTION_FACTOR: ClassVar[float] = 300  # per minute
+    PRODUCTION_COEFF: ClassVar[float] = 0.3
 
     def get_production(self, seconds: float = 1.0) -> float:
         # (PRODUCTION_FACTOR * math.exp(level * PRODUCTION_COEFF) / 60) -> per second
