@@ -104,6 +104,7 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
                         "owner": await self.get_owner(),
                         "endedAt": await self.get_game_session_ended_at(),
                         "battleLog": await self.get_battle_log(),
+                        "morale": await self.get_morale(),
                         **await self.get_village(),
                         **await self.update_resources(),
                         **await self.get_units(),
@@ -175,3 +176,7 @@ class GameSessionConsumer(AsyncJsonWebsocketConsumer):
     def get_battle_log(self):
         battles = self.player.game_session.battles.order_by("-start_time")[:10]
         return serializers.BattleLogSerializer(battles, many=True).data
+
+    @database_sync_to_async
+    def get_morale(self):
+        return self.player.village.morale
