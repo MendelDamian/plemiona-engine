@@ -416,6 +416,7 @@ class BattleService:
         GameSessionConsumerService.send_fetch_units_count(battle.attacker)
         GameSessionConsumerService.send_fetch_resources(battle.attacker)
         GameSessionConsumerService.send_morale(battle.attacker)
+        GameSessionConsumerService.send_battle_log(battle.attacker.game_session)
 
 
 class CoordinateService:
