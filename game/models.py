@@ -13,7 +13,7 @@ from utils.models import BaseModel
 
 class GameSession(BaseModel):
     MINIMUM_PLAYERS = 2
-    MAXIMUM_PLAYERS = 8
+    MAXIMUM_PLAYERS = 15
     GAME_CODE_LENGTH = 6
     DURATION = timedelta(minutes=15)
 
