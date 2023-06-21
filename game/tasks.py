@@ -6,6 +6,7 @@ from plemiona_api.celery import app
 def upgrade_building_task(player_id, building_name):
     player = models.Player.objects.get(id=player_id)
 
+    player.village.update_resources()
     player.village.upgrade_building_level(building_name)
     player.village.set_building_upgrading_state(building_name, False)
 
