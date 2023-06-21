@@ -32,13 +32,15 @@ def train_unit_task(player_id, unit_name):
 
 @app.task
 def attack_task(battle_id):
-    battle = models.Battle.objects.get(id=battle_id)
-    services.BattleService.battle_phase(battle)
+    services.BattleService.battle_phase(models.Battle.objects.get(id=battle_id))
 
 
 @app.task
 def return_units_task(battle_id):
-    services.BattleService.attacker_return(models.Battle.objects.get(id=battle_id))
+    battle = models.Battle.objects.get(id=battle_id)
+    battle.phase = models.Battle.BattlePhase.FINISHED
+    battle.save()
+    services.BattleService.attacker_return(battle)
 
 
 @app.task
