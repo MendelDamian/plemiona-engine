@@ -92,7 +92,7 @@ class ResourceBuilding(Building):
     BASE_UPGRADE_TIME = timedelta(seconds=10)
 
     PRODUCTION_FACTOR: ClassVar[float] = 300  # per minute
-    PRODUCTION_COEFF: ClassVar[float] = 0.3
+    PRODUCTION_COEFF: ClassVar[float] = 0.22
 
     def get_production(self, seconds: float = 1.0) -> float:
         # (PRODUCTION_FACTOR * math.exp(level * PRODUCTION_COEFF) / 60) -> per second
