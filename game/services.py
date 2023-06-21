@@ -332,8 +332,12 @@ class BattleService:
             battle.attacker_strenght, battle.defender_strenght
         )
 
+        count_left_attacker_units = 0
+
         winner = attacker if battle.attacker_strenght > battle.defender_strenght else defender
         if winner == attacker:
+            battle.result = models.Battle.BattleResult.WIN
+
             battle.left_attacker_spearman_count = round(battle.attacker_spearman_count * (1 - ratio))
             battle.left_attacker_swordsman_count = round(battle.attacker_swordsman_count * (1 - ratio))
             battle.left_attacker_axeman_count = round(battle.attacker_axeman_count * (1 - ratio))
@@ -349,15 +353,24 @@ class BattleService:
             battle.plundered_iron = min(defender.village.iron, attacker_capacity)
 
             defender.village.charge_resources(battle.plundered_resources)
+            count_left_attacker_units = sum(map(lambda unit: unit.count, battle.left_attacker_units.values()))
 
             defender.village.morale -= battle.defender_lost_morale
+
             attack_time = battle.battle_time - battle.start_time
-            battle.return_time = timezone.now() + attack_time / 2
+            if count_left_attacker_units > 0:
+                battle.phase = models.Battle.BattlePhase.RETURNING
+                battle.return_time = timezone.now() + attack_time / 2
+            else:
+                battle.phase = models.Battle.BattlePhase.FINISHED
 
             GameSessionConsumerService.inform_player(
                 defender, f"You have lost the defense against {attacker.nickname}!"
             )
         else:
+            battle.result = models.Battle.BattleResult.LOSE
+            battle.phase = models.Battle.BattlePhase.FINISHED
+
             battle.left_defender_spearman_count = round(battle.defender_spearman_count * (1 - ratio))
             battle.left_defender_swordsman_count = round(battle.defender_swordsman_count * (1 - ratio))
             battle.left_defender_axeman_count = round(battle.defender_axeman_count * (1 - ratio))
@@ -381,10 +394,10 @@ class BattleService:
         GameSessionConsumerService.send_fetch_units_count(defender)
         GameSessionConsumerService.send_fetch_resources(defender)
         GameSessionConsumerService.send_morale(defender)
+        GameSessionConsumerService.send_battle_log(battle.attacker.game_session)
 
-        if winner == attacker:
+        if count_left_attacker_units > 0:
             tasks.return_units_task.apply_async((battle.id,), eta=battle.return_time)
-            GameSessionConsumerService.send_battle_log(battle.attacker.game_session)
 
     @staticmethod
     def attacker_return(battle: models.Battle):

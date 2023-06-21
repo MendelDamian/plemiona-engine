@@ -32,8 +32,7 @@ def train_unit_task(player_id, unit_name):
 
 @app.task
 def attack_task(battle_id):
-    battle = models.Battle.objects.get(id=battle_id)
-    services.BattleService.battle_phase(battle)
+    services.BattleService.battle_phase(models.Battle.objects.get(id=battle_id))
 
 
 @app.task
