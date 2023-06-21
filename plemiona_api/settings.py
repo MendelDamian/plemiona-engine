@@ -19,9 +19,10 @@ SECRET_KEY = config("SECRET_KEY", "test")
 DEBUG = config("DEBUG", True, cast=bool)
 
 ALLOWED_HOSTS = ["*"]
-
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+    "http://localhost:3000/",
+    "https://api-tribalwars.app/",
+    "https://www.api-tribalwars.app/",
 ]
 
 # Application definition
@@ -179,3 +180,7 @@ CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
 # set the celery timezone
 CELERY_TIMEZONE = "UTC"
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
