@@ -60,7 +60,7 @@ class Unit:
 
 class Spearman(Unit):
     POINTS_PER_UNIT = 3
-    SPEED = timedelta(seconds=15)
+    SPEED = timedelta(seconds=5)
     TRAINING_TIME = timedelta(seconds=5)
 
     WOOD_COST = 50
@@ -75,7 +75,7 @@ class Spearman(Unit):
 
 class Swordsman(Unit):
     POINTS_PER_UNIT = 4
-    SPEED = timedelta(seconds=22)
+    SPEED = timedelta(seconds=9)
     TRAINING_TIME = timedelta(seconds=8)
 
     WOOD_COST = 30
@@ -90,7 +90,7 @@ class Swordsman(Unit):
 
 class Axeman(Unit):
     POINTS_PER_UNIT = 5
-    SPEED = timedelta(seconds=18)
+    SPEED = timedelta(seconds=8)
     TRAINING_TIME = timedelta(seconds=7)
 
     WOOD_COST = 60
@@ -105,7 +105,7 @@ class Axeman(Unit):
 
 class Archer(Unit):
     POINTS_PER_UNIT = 2
-    SPEED = timedelta(seconds=18)
+    SPEED = timedelta(seconds=10)
     TRAINING_TIME = timedelta(seconds=10)
 
     WOOD_COST = 100
