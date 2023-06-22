@@ -205,7 +205,7 @@ class VillageService:
 
         upgrade_costs = building.get_upgrade_cost()
         village.charge_resources(upgrade_costs)
-        village.set_building_upgrading_state(building_name, False)
+        village.set_building_upgrading_state(building_name, True)
         GameSessionConsumerService.send_fetch_resources(player)
 
         upgrade_time = village.get_building_upgrade_time(building)
