@@ -20,9 +20,8 @@ DEBUG = config("DEBUG", True, cast=bool)
 
 ALLOWED_HOSTS = ["*"]
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "https://api-tribalwars.app",
-    "https://www.api-tribalwars.app",
+    "https://tb.mendeldamian.com",
+    "https://www.tb.mendeldamian.com",
 ]
 
 # Application definition
